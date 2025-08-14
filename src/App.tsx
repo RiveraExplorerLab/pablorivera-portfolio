@@ -1,10 +1,6 @@
-import Greeting from "./components/Greeting";
+import { RouterProvider } from 'react-router-dom'
+import { router } from './router'
 
 export default function App() {
-  return (
-    <Greeting
-    name="Pablo Moreno-Rivera"
-    tagline="System thinker. Code wrangler"
-    />
-  )
+  return <RouterProvider router={router} />
 }
