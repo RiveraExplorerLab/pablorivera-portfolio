@@ -8,6 +8,9 @@ import Stack from './routes/Stack'
 import Blog from './routes/Blog'
 import Post from './routes/Post'
 import Community from './routes/Community'
+import Login from './routes/Login'
+import Admin from './routes/Admin'
+import AdminCommunity from './routes/AdminCommunity'
 
 // Optional: simple 404 page
 function NotFound() {
@@ -27,6 +30,9 @@ export const router = createBrowserRouter([
       { path: 'blog', element: <Blog /> },
       { path: 'blog/:slug', element: <Post /> },      // dynamic blog post
       { path: 'community', element: <Community /> },
+      { path: 'login', element: <Login /> },
+      { path: 'admin', element: <Admin /> },
+      { path: '/admin/community', element: <AdminCommunity /> },
     ],
   },
 ])

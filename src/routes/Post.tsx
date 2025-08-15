@@ -1,27 +1,37 @@
 import { useParams } from 'react-router-dom'
-import { posts } from '../data/posts'
+import { usePost } from '../lib/useSupabase'
+import { renderHtmlFromMd } from '../lib/renderMd'
 
 export default function Post() {
-  const { slug } = useParams<{ slug: string }>()
-  const post = posts.find(p => p.slug === slug)
+  const { slug = '' } = useParams()
+  const { data: post, loading, error } = usePost(slug)
 
-  if (!post) {
-    return <p className="text-neutral-400">Post not found.</p>
-  }
+  if (loading) return <p className="text-stone-400 text-sm">Loading…</p>
+  if (error || !post) return <p className="text-rose-400 text-sm">Not found.</p>
 
-  // Eventually: load from MDX
   return (
-    <article className="prose prose-invert max-w-none">
-      <h1>{post.title}</h1>
-      <time className="text-sm text-neutral-500">
-        {new Date(post.date).toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}
-      </time>
-      <p className="mt-4">{post.summary}</p>
-      <p className="mt-4">Full post content will go here. Later we can wire MDX.</p>
+    <article className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100">{post.title}</h1>
+        <div className="text-xs text-stone-400">
+          {new Date(post.published_at || post.created_at).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'long', day: 'numeric'
+          })}
+        </div>
+        {post.cover_url && (
+          <img
+            src={post.cover_url}
+            alt=""
+            className="mt-3 rounded-md ring-1 ring-stone-800 max-h-[420px] object-cover w-full"
+            loading="lazy"
+          />
+        )}
+      </header>
+
+      <div
+        className="prose prose-invert max-w-none"
+        dangerouslySetInnerHTML={{ __html: renderHtmlFromMd(post.content_md || '') }}
+      />
     </article>
   )
 }

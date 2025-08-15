@@ -1,4 +1,31 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 html, body, #root { height: 100%; }
 body { background: #0a0a0a; color: #e5e5e5; -webkit-font-smoothing: antialiased; }
+
+:root {
+  color-scheme: dark;
+}
+
+a {
+  text-underline-offset: 3px;
+  text-decoration-thickness: 0.06em;
+}
+a:hover { text-decoration: underline; }
+
+.btn-primary {
+  @apply inline-flex items-center rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium
+         hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+}
+.btn-secondary {
+  @apply inline-flex items-center rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium text-stone-200
+         hover:border-emerald-500/50 hover:bg-stone-900 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+}
+.card {
+  @apply rounded-xl border border-stone-800 bg-stone-900/40;
+}
+.input {
+  @apply w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
+         placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+}
