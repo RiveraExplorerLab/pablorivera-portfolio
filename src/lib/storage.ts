@@ -5,7 +5,6 @@ const BUCKET = 'covers'
 export async function uploadCover(file: File) {
   const ext = file.name.split('.').pop() || 'jpg'
   const name = `${crypto.randomUUID()}.${ext}`
-  const path = `${BUCKET}/${name}`
   const { error } = await supabase.storage.from(BUCKET).upload(name, file, {
     cacheControl: '3600',
     upsert: false,

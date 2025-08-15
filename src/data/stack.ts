@@ -2,6 +2,7 @@ export type Tool = {
   name: string
   role: string            // 3–7 words: why you use it
   link?: string
+  tags?: string[]
 }
 
 export type StackGroup = {
