@@ -8,8 +8,8 @@ import {
 import type { User } from 'firebase/auth'
 import { auth } from '../lib/firebase'
 
-// Allowed admin email(s) - add more as needed
-const ADMIN_EMAILS = ['pablomrivera@outlook.com']
+// Allowed admin email(s) - loaded from environment variables
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').filter(Boolean)
 
 interface AuthContextType {
   user: User | null
