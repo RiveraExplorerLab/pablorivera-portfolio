@@ -15,10 +15,11 @@ export default function Post() {
   return (
     <article className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
+          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
           {post.title}
         </h1>
-        <div className="text-xs text-stone-400">
+        <div className="text-xs text-teal-400/80">
           {publishedDate.toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'long',
@@ -26,12 +27,14 @@ export default function Post() {
           })}
         </div>
         {post.coverImage && (
-          <img
-            src={post.coverImage}
-            alt=""
-            className="mt-3 rounded-md ring-1 ring-stone-800 max-h-[420px] object-cover w-full"
-            loading="lazy"
-          />
+          <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+            <img
+              src={post.coverImage}
+              alt=""
+              className="max-h-[420px] object-cover w-full"
+              loading="lazy"
+            />
+          </div>
         )}
       </header>
 
@@ -40,7 +43,11 @@ export default function Post() {
           {post.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs px-2.5 py-1 rounded-full border border-stone-700 text-stone-300 bg-stone-900/60"
+              className="text-xs px-3 py-1 rounded-full text-stone-300"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
             >
               {tag}
             </span>

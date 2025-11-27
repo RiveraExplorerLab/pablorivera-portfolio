@@ -25,7 +25,6 @@ export default function Community() {
           transition={{ duration: 0.2 }}
           className="text-4xl md:text-5xl font-bold tracking-tight text-stone-100 flex items-center gap-3"
         >
-          <span className="inline-block size-2 rounded-full bg-emerald-400" />
           Community
         </motion.h1>
         <p className="max-w-2xl text-stone-300">
@@ -37,14 +36,11 @@ export default function Community() {
             href="https://discord.gg/ZmrmMQ5mkQ"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="btn-primary"
           >
             Join Discord
           </a>
-          <Link
-            to="/blog"
-            className="inline-flex items-center rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium text-stone-200 hover:border-emerald-500/50 hover:bg-stone-900 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-          >
+          <Link to="/blog" className="btn-secondary">
             Read Notes
           </Link>
         </div>
@@ -53,7 +49,6 @@ export default function Community() {
       {/* WAYS TO JOIN */}
       <section aria-labelledby="join" className="space-y-4">
         <h2 id="join" className="text-2xl font-semibold text-stone-100 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
           Ways to join
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -71,10 +66,10 @@ export default function Community() {
             Have a clunky workflow? Tell me. If it's small and clear, I might build it.
             <div className="mt-3">
               <a
-                className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400 text-sm"
+                className="text-teal-400 hover:text-teal-300 text-sm transition-colors"
                 href="mailto:hello@pablorivera.dev?subject=Explorer%20Lab%20Idea"
               >
-                Email an idea
+                Email an idea →
               </a>
             </div>
           </Card>
@@ -84,22 +79,26 @@ export default function Community() {
       {/* ETHOS */}
       <section aria-labelledby="ethos" className="space-y-3">
         <h2 id="ethos" className="text-2xl font-semibold text-stone-100 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
           Ethos
         </h2>
-        <ul className="grid gap-3 md:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-3">
           {[
             ['Clarity first', 'Plain language, short demos, honest trade-offs.'],
             ['Tight loops', 'Ship small, learn fast, document decisions.'],
             ['Kind candor', 'Challenge ideas, not people. Direct but respectful.'],
           ].map(([title, body]) => (
-            <li key={title} className="rounded-xl border border-stone-800 bg-stone-900/40 p-4">
+            <motion.li 
+              key={title} 
+              className="card p-4"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
               <div className="font-medium text-stone-100 flex items-center gap-2">
-                <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+                <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
                 {title}
               </div>
               <p className="text-sm text-stone-300 mt-1">{body}</p>
-            </li>
+            </motion.li>
           ))}
         </ul>
       </section>
@@ -107,7 +106,6 @@ export default function Community() {
       {/* FAQ */}
       <section aria-labelledby="faq" className="space-y-4">
         <h2 id="faq" className="text-2xl font-semibold text-stone-100 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
           FAQ
         </h2>
         <div className="space-y-2">
@@ -124,17 +122,17 @@ export default function Community() {
       </section>
 
       {/* CTA */}
-      <section className="rounded-xl border border-stone-800 bg-stone-900/40 p-5">
+      <section className="card p-6">
         <h2 className="text-xl font-semibold text-stone-100">Start anywhere</h2>
         <p className="text-stone-300 text-sm mt-1">
           Not sure where to click? Browse a project, then reply with one thing that could be clearer.
         </p>
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
-          <Link className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400" to="/projects">
-            See projects
+          <Link className="text-teal-400 hover:text-teal-300 transition-colors" to="/projects">
+            See projects →
           </Link>
-          <a className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400" href="mailto:hello@pablorivera.dev">
-            Email me
+          <a className="text-teal-400 hover:text-teal-300 transition-colors" href="mailto:hello@pablorivera.dev">
+            Email me →
           </a>
         </div>
       </section>
@@ -151,10 +149,14 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.18 }}
-      className="rounded-xl border border-stone-800 bg-stone-900/40 p-4"
+      whileHover={{ y: -2 }}
+      className="card p-5"
     >
-      <h3 className="font-semibold text-stone-100">{title}</h3>
-      <div className="text-sm text-stone-300 mt-1">{children}</div>
+      <h3 className="font-semibold text-stone-100 flex items-center gap-2">
+        <span className="inline-block size-1.5 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+        {title}
+      </h3>
+      <div className="text-sm text-stone-300 mt-2">{children}</div>
     </motion.article>
   )
 }
@@ -217,13 +219,11 @@ function NewsletterForm() {
         value={email}
         onChange={e => { setEmail(e.target.value); if (status !== 'idle') { setStatus('idle'); setErrMsg('') } }}
         placeholder="you@example.com"
-        className="min-w-0 flex-1 rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                   placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+        className="input min-w-0 flex-1"
       />
       <button
         type="submit"
-        className="rounded-lg bg-emerald-400 text-black px-3 py-2 text-sm font-medium hover:bg-emerald-300 transition
-                   focus:outline-none focus:ring-2 focus:ring-emerald-500/60 disabled:opacity-60"
+        className="btn-primary"
         disabled={status === 'loading'}
       >
         {status === 'loading' ? 'Joining…' : 'Join'}
@@ -232,7 +232,7 @@ function NewsletterForm() {
       <AnimatePresence>
         {status === 'ok' && (
           <motion.span initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -2 }}
-            className="self-center text-xs text-emerald-400">
+            className="self-center text-xs text-teal-400">
             You're in. Thanks!
           </motion.span>
         )}
@@ -287,7 +287,7 @@ function WaitlistForm({ label, tag }: { label: string; tag: string }) {
         return
       }
 
-      await createEarlyAccessSignup(value, notes, tag, navigator.userAgent)
+      await createEarlyAccessSignup(email, notes, tag, navigator.userAgent)
       setStatus('ok')
       setEmail('')
       setNotes('')
@@ -311,21 +311,18 @@ function WaitlistForm({ label, tag }: { label: string; tag: string }) {
         value={email}
         onChange={e => { setEmail(e.target.value); if (status !== 'idle') { setStatus('idle'); setErrMsg('') } }}
         placeholder="you@example.com"
-        className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                   placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+        className="input"
       />
       <textarea
         value={notes}
         onChange={e => { setNotes(e.target.value); if (status !== 'idle') { setStatus('idle'); setErrMsg('') } }}
         placeholder="What kinds of tools would you like to test?"
         rows={2}
-        className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                   placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+        className="input"
       />
       <button
         type="submit"
-        className="rounded-lg border border-stone-700 px-3 py-2 text-sm text-stone-200 hover:border-emerald-500/50 hover:bg-stone-900 transition
-                   focus:outline-none focus:ring-2 focus:ring-emerald-500/60 disabled:opacity-60"
+        className="btn-secondary w-full justify-center"
         disabled={status === 'loading'}
       >
         {status === 'loading' ? 'Submitting…'
@@ -353,11 +350,11 @@ function WaitlistForm({ label, tag }: { label: string; tag: string }) {
 function Faq({ q, children }: { q: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border border-stone-800 bg-stone-900/40">
+    <div className="card overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full px-4 py-3 text-left font-medium text-stone-100 hover:bg-stone-900/60
-                   focus:outline-none focus:ring-2 focus:ring-emerald-500/60 rounded-xl"
+        className="w-full px-4 py-3 text-left font-medium text-stone-100 hover:bg-white/5
+                   focus:outline-none focus:ring-2 focus:ring-teal-500/60 transition-all"
         aria-expanded={open}
       >
         {q}

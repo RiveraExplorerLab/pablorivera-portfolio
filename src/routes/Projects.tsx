@@ -13,8 +13,10 @@ export default function Projects() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-stone-100">Projects</h1>
-        <p className="text-stone-300">A running log of what I've been building.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
+          Projects
+        </h1>
+        <p className="text-stone-300 mt-1">A running log of what I've been building.</p>
       </header>
 
       <ul className="grid gap-4 sm:grid-cols-2">
@@ -25,10 +27,11 @@ export default function Projects() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.2, delay: i * 0.03 }}
-            className="rounded-xl border border-stone-800 bg-stone-900/40 p-4"
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="card p-5"
           >
-            <div className="flex gap-3">
-              <div className="w-24 h-16 rounded-md overflow-hidden bg-stone-800 shrink-0">
+            <div className="flex gap-4">
+              <div className="w-24 h-16 rounded-lg overflow-hidden bg-white/5 shrink-0 border border-white/10">
                 {project.coverImage && (
                   <img
                     src={project.coverImage}
@@ -40,7 +43,7 @@ export default function Projects() {
               </div>
               <div className="min-w-0">
                 <h2 className="font-semibold text-stone-100">
-                  <Link to={`/projects/${project.slug}`} className="hover:underline">
+                  <Link to={`/projects/${project.slug}`} className="hover:text-teal-300 transition-colors">
                     {project.title}
                   </Link>
                 </h2>
@@ -52,9 +55,9 @@ export default function Projects() {
                     href={project.liveUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-emerald-400 underline underline-offset-2 text-sm mt-2 block"
+                    className="text-teal-400 hover:text-teal-300 text-sm mt-2 block transition-colors"
                   >
-                    Try it Live
+                    Try it Live ↗
                   </a>
                 )}
               </div>
@@ -66,7 +69,11 @@ export default function Projects() {
                 {project.techStack.slice(0, 4).map((tech) => (
                   <span
                     key={tech}
-                    className="text-[10px] px-2 py-0.5 rounded-full border border-stone-700 text-stone-400"
+                    className="text-[10px] px-2 py-0.5 rounded-full text-stone-400"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
                   >
                     {tech}
                   </span>
@@ -83,7 +90,7 @@ export default function Projects() {
       </ul>
 
       {(!projects || projects.length === 0) && (
-        <div className="rounded-xl border border-stone-800 bg-stone-900/40 p-6">
+        <div className="card p-6">
           <p className="text-stone-300">No projects yet.</p>
         </div>
       )}

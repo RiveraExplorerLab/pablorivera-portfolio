@@ -33,12 +33,12 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="text-4xl md:text-5xl font-bold tracking-tight text-stone-100"
           >
-            I&apos;m <span className="text-emerald-400">Pablo</span>.
+            I&apos;m <span className="gradient-text">Pablo</span>.
             <span className="block text-stone-400" aria-live="polite" aria-atomic="true">
               {typed}
               {!prefersReducedMotion && (
                 <motion.span
-                  className="inline-block w-[0.6ch] align-baseline text-emerald-400"
+                  className="inline-block w-[0.6ch] align-baseline gradient-text"
                   initial={{ opacity: 1 }}
                   animate={{ opacity: [1, 0, 1] }}
                   transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
@@ -56,16 +56,10 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <Link
-              to="/about"
-              className="inline-flex items-center rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            >
+            <Link to="/about" className="btn-primary">
               About Me
             </Link>
-            <Link
-              to="/community"
-              className="inline-flex items-center rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium text-stone-200 hover:border-emerald-500/50 hover:bg-stone-900 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            >
+            <Link to="/community" className="btn-secondary">
               Community
             </Link>
           </div>
@@ -88,8 +82,12 @@ export default function Home() {
       {/* FEATURED BUILD */}
       {featured && (
         <section aria-label="Featured build">
-          <div className="flex items-start gap-5">
-            <div className="w-32 h-20 rounded-md overflow-hidden bg-stone-800 shrink-0">
+          <motion.div 
+            className="card p-5 flex items-start gap-5"
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="w-32 h-20 rounded-lg overflow-hidden bg-white/5 shrink-0 border border-white/10">
               {featured.coverImage && (
                 <img
                   src={featured.coverImage}
@@ -106,24 +104,24 @@ export default function Home() {
               </p>
               <div className="mt-3 flex gap-4 text-sm">
                 <Link
-                  className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
+                  className="text-teal-400 hover:text-teal-300 transition-colors"
                   to="/projects"
                 >
-                  All Builds
+                  All Builds →
                 </Link>
                 {featured.liveUrl && (
                   <a
-                    className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
+                    className="text-teal-400 hover:text-teal-300 transition-colors"
                     href={featured.liveUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Try it Live
+                    Try it Live ↗
                   </a>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </section>
       )}
     </div>
@@ -137,13 +135,14 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.18 }}
-      className="rounded-xl border border-stone-800 bg-stone-900/40 p-4"
+      whileHover={{ y: -4, scale: 1.02 }}
+      className="card p-5"
     >
       <h3 className="font-semibold text-stone-100 flex items-center gap-2">
-        <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+        <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
         {title}
       </h3>
-      <p className="text-sm text-stone-300 mt-1">{children}</p>
+      <p className="text-sm text-stone-300 mt-2">{children}</p>
     </motion.article>
   )
 }

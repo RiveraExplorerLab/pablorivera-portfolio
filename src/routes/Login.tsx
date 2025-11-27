@@ -51,11 +51,11 @@ export default function Login() {
   return (
     <div className="max-w-sm mx-auto space-y-4">
       <h1 className="text-2xl font-semibold text-stone-100 flex items-center gap-2">
-        <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+        <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
         Admin Sign In
       </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="card p-5 space-y-3">
         <div>
           <label htmlFor="email" className="sr-only">Email</label>
           <input
@@ -66,8 +66,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             autoComplete="email"
-            className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                       placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="input"
           />
         </div>
         
@@ -81,17 +80,14 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             autoComplete="current-password"
-            className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                       placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="input"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-emerald-400 text-black px-3 py-2 text-sm font-medium 
-                     hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60
-                     disabled:opacity-60 disabled:cursor-not-allowed"
+          className="btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {submitting ? 'Signing in…' : 'Sign In'}
         </button>

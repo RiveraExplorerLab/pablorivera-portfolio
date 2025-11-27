@@ -2,10 +2,65 @@
 @plugin "@tailwindcss/typography";
 
 html, body, #root { height: 100%; }
-body { background: #0a0a0a; color: #e5e5e5; -webkit-font-smoothing: antialiased; }
+body { 
+  background: #020617; 
+  color: #e7e5e4; 
+  -webkit-font-smoothing: antialiased; 
+}
 
 :root {
   color-scheme: dark;
+}
+
+/* Animated background blobs */
+.blob-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.blob-1 {
+  width: 600px;
+  height: 600px;
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+  top: -200px;
+  right: -100px;
+  animation: blob 20s infinite;
+}
+
+.blob-2 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+  bottom: -150px;
+  left: -100px;
+  animation: blob 25s infinite reverse;
+}
+
+.blob-3 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: blob 22s infinite;
+}
+
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(20px, -30px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.9); }
+  75% { transform: translate(30px, 10px) scale(1.05); }
 }
 
 a {
@@ -14,18 +69,84 @@ a {
 }
 a:hover { text-decoration: underline; }
 
+/* Glass effect utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(to right, #5eead4, #67e8f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .btn-primary {
-  @apply inline-flex items-center rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium
-         hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+  @apply inline-flex items-center rounded-lg bg-teal-400 text-slate-950 px-4 py-2 text-sm font-medium
+         hover:bg-teal-300 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/60
+         shadow-lg shadow-teal-500/20 hover:shadow-teal-400/30 hover:scale-105;
 }
+
 .btn-secondary {
-  @apply inline-flex items-center rounded-lg border border-stone-700 px-4 py-2 text-sm font-medium text-stone-200
-         hover:border-emerald-500/50 hover:bg-stone-900 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+  @apply inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium text-stone-200
+         transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/60
+         hover:scale-105 hover:border-white/30;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .card {
-  @apply rounded-xl border border-stone-800 bg-stone-900/40;
+  @apply rounded-2xl transition-all duration-300;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
 .input {
-  @apply w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-         placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60;
+  @apply w-full rounded-lg px-3 py-2 text-sm text-stone-100
+         placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-teal-500/60
+         transition-all duration-300;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Headshot bubble style */
+.headshot-bubble {
+  @apply rounded-full overflow-hidden;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 0 40px rgba(20, 184, 166, 0.2),
+    inset 0 0 30px rgba(255, 255, 255, 0.05);
 }

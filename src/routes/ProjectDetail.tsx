@@ -22,8 +22,8 @@ export default function ProjectDetail() {
     return (
       <div className="space-y-3">
         <p className="text-stone-300">Project not found.</p>
-        <Link to="/projects" className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400">
-          Back to Projects
+        <Link to="/projects" className="text-teal-400 hover:text-teal-300 transition-colors">
+          ← Back to Projects
         </Link>
       </div>
     )
@@ -32,7 +32,9 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-stone-100">{project.title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
+          {project.title}
+        </h1>
 
         {project.summary && (
           <p className="text-stone-300">{project.summary}</p>
@@ -40,41 +42,43 @@ export default function ProjectDetail() {
 
         <div className="flex flex-wrap gap-4 text-sm">
           <Link
-            className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
+            className="text-teal-400 hover:text-teal-300 transition-colors"
             to="/projects"
           >
             ← All projects
           </Link>
           {project.liveUrl && (
             <a
-              className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
+              className="text-teal-400 hover:text-teal-300 transition-colors"
               href={project.liveUrl}
               target="_blank"
               rel="noreferrer"
             >
-              Live
+              Live ↗
             </a>
           )}
           {project.repoUrl && (
             <a
-              className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
+              className="text-teal-400 hover:text-teal-300 transition-colors"
               href={project.repoUrl}
               target="_blank"
               rel="noreferrer"
             >
-              Repo
+              Repo ↗
             </a>
           )}
         </div>
       </header>
 
       {project.coverImage && (
-        <img
-          src={project.coverImage}
-          alt=""
-          className="w-full max-h-80 object-cover rounded-lg border border-stone-800"
-          loading="lazy"
-        />
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <img
+            src={project.coverImage}
+            alt=""
+            className="w-full max-h-80 object-cover"
+            loading="lazy"
+          />
+        </div>
       )}
 
       {/* Tech Stack */}
@@ -85,7 +89,7 @@ export default function ProjectDetail() {
             {project.techStack.map((tech) => (
               <span
                 key={tech}
-                className="text-xs px-2.5 py-1 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                className="text-xs px-2.5 py-1 rounded-full border border-teal-500/30 text-teal-400 bg-teal-500/10"
               >
                 {tech}
               </span>
@@ -100,7 +104,11 @@ export default function ProjectDetail() {
           {project.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs px-2.5 py-1 rounded-full border border-stone-700 text-stone-300 bg-stone-900/60"
+              className="text-xs px-2.5 py-1 rounded-full text-stone-300"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
             >
               {tag}
             </span>
@@ -187,9 +195,9 @@ function RequestAccessForm({ project }: { project: Project }) {
 
   if (status === 'success') {
     return (
-      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5">
-        <h3 className="font-semibold text-emerald-400 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+      <div className="card p-5 border-teal-500/30 bg-teal-500/10">
+        <h3 className="font-semibold text-teal-400 flex items-center gap-2">
+          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
           Request Submitted
         </h3>
         <p className="text-sm text-stone-300 mt-2">
@@ -201,9 +209,9 @@ function RequestAccessForm({ project }: { project: Project }) {
 
   if (status === 'duplicate') {
     return (
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5">
+      <div className="card p-5 border-amber-500/30 bg-amber-500/10">
         <h3 className="font-semibold text-amber-400 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-amber-400" />
+          <span className="inline-block size-2 rounded-full bg-amber-400" />
           Request Already Pending
         </h3>
         <p className="text-sm text-stone-300 mt-2">
@@ -214,10 +222,10 @@ function RequestAccessForm({ project }: { project: Project }) {
   }
 
   return (
-    <div className="rounded-xl border border-stone-800 bg-stone-900/40 p-5 space-y-4">
+    <div className="card p-5 space-y-4">
       <div>
         <h3 className="font-semibold text-stone-100 flex items-center gap-2">
-          <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
+          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
           Request Access
         </h3>
         <p className="text-sm text-stone-400 mt-1">
@@ -237,8 +245,7 @@ function RequestAccessForm({ project }: { project: Project }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                       placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="input"
           />
         </div>
 
@@ -253,8 +260,7 @@ function RequestAccessForm({ project }: { project: Project }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                       placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="input"
           />
         </div>
 
@@ -269,17 +275,14 @@ function RequestAccessForm({ project }: { project: Project }) {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Tell me a bit about why you're interested in this project…"
             rows={3}
-            className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                       placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+            className="input"
           />
         </div>
 
         <button
           type="submit"
           disabled={status === 'checking' || status === 'submitting'}
-          className="rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium 
-                     hover:bg-emerald-300 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60
-                     disabled:opacity-60 disabled:cursor-not-allowed"
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {status === 'checking' ? 'Checking…' : status === 'submitting' ? 'Submitting…' : 'Submit Request'}
         </button>
