@@ -1,26 +1,73 @@
+// src/providers/AuthProvider.tsx
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+} from 'firebase/auth'
+import type { User } from 'firebase/auth'
+import { auth } from '../lib/firebase'
 
-type AuthCtx = { session: any | null; user: any | null; loading: boolean }
-const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true })
-export const useAuth = () => useContext(Ctx)
+// Allowed admin email(s) - add more as needed
+const ADMIN_EMAILS = ['pablomrivera@outlook.com']
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<any | null>(null)
+interface AuthContextType {
+  user: User | null
+  isAdmin: boolean
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  signOut: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | null>(null)
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider')
+  }
+  return ctx
+}
+
+interface AuthProviderProps {
+  children: React.ReactNode
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Check if current user is in admin whitelist
+  const isAdmin = user ? ADMIN_EMAILS.includes(user.email ?? '') : false
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session ?? null)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => setSession(sess))
-    return () => sub.subscription.unsubscribe()
+
+    return () => unsubscribe()
   }, [])
 
+  async function signIn(email: string, password: string) {
+    await signInWithEmailAndPassword(auth, email, password)
+  }
+
+  async function signOut() {
+    await firebaseSignOut(auth)
+  }
+
+  const value: AuthContextType = {
+    user,
+    isAdmin,
+    loading,
+    signIn,
+    signOut,
+  }
+
   return (
-    <Ctx.Provider value={{ session, user: session?.user ?? null, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
-    </Ctx.Provider>
+    </AuthContext.Provider>
   )
 }

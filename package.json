@@ -1,17 +1,19 @@
 {
   "name": "pablorivera-portfolio",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:all": "npm run build && firebase deploy"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.55.0",
     "dompurify": "^3.2.6",
+    "firebase": "^10.14.0",
     "framer-motion": "^12.23.12",
     "marked": "^16.1.2",
     "react": "^19.1.1",
@@ -22,6 +24,7 @@
     "@eslint/js": "^9.33.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.12",
+    "@types/dompurify": "^3.0.5",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",

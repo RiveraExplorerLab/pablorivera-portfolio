@@ -1,72 +1,70 @@
 // src/routes/Admin.tsx
-import { useEffect, useMemo, useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useState } from 'react'
+import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../providers/AuthProvider'
-
-type PostRow = {
-  id: string
-  slug: string
-  title: string
-  summary: string | null
-  content_md: string
-  cover_url: string | null
-  cover_path: string | null
-  tags: string[] | null
-  is_published: boolean
-  published_at: string | null
-  created_at: string
-  updated_at: string
-  owner_id?: string
-}
-
-type ProjectRow = {
-  id: string
-  slug: string
-  name: string
-  one_liner: string | null
-  details_md: string | null
-  cover_url: string | null
-  cover_path: string | null
-  links: Record<string, string> | null
-  tags: string[] | null
-  is_published: boolean
-  published_at: string | null
-  created_at: string
-  updated_at: string
-  owner_id?: string
-}
+import { useAllPosts } from '../hooks/useBlogPosts'
+import { useAllProjects } from '../hooks/useProjects'
+import { 
+  createPost, 
+  updatePost, 
+  deletePost, 
+  isSlugAvailable 
+} from '../lib/blogPosts'
+import { 
+  createProject, 
+  updateProject, 
+  deleteProject, 
+  isProjectSlugAvailable 
+} from '../lib/projects'
+import { uploadCoverImage, deleteCoverImage, validateImageFile } from '../lib/storage'
+import { slugify } from '../lib/slugify'
+import type { BlogPost, Project } from '../lib/types'
+import { Timestamp } from 'firebase/firestore'
 
 export default function Admin() {
-  const { user, loading } = useAuth()
+  const { user, isAdmin, loading, signOut } = useAuth()
   const [tab, setTab] = useState<'posts' | 'projects'>('posts')
 
   if (loading) return <div className="text-stone-400 text-sm">Checking session…</div>
-  if (!user) return <Navigate to="/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/login" replace />
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-5xl">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-stone-100">Admin</h1>
-        <button
-          className="text-sm underline decoration-emerald-500/50 underline-offset-4"
-          onClick={() => supabase.auth.signOut()}
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/admin/community"
+            className="text-sm text-stone-300 hover:text-stone-100 underline decoration-stone-600 underline-offset-4 hover:decoration-emerald-500/50"
+          >
+            Community
+          </Link>
+          <Link
+            to="/admin/access"
+            className="text-sm text-stone-300 hover:text-stone-100 underline decoration-stone-600 underline-offset-4 hover:decoration-emerald-500/50"
+          >
+            Access Requests
+          </Link>
+          <button
+            className="text-sm underline decoration-emerald-500/50 underline-offset-4"
+            onClick={() => signOut()}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       {/* Tabs */}
       <div className="inline-flex rounded-lg border border-stone-800 overflow-hidden">
         <button
           onClick={() => setTab('posts')}
-          className={`px-3 py-1.5 text-sm ${tab==='posts' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
+          className={`px-3 py-1.5 text-sm ${tab === 'posts' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
         >
           Posts
         </button>
         <button
           onClick={() => setTab('projects')}
-          className={`px-3 py-1.5 text-sm ${tab==='projects' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
+          className={`px-3 py-1.5 text-sm ${tab === 'projects' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
         >
           Projects
         </button>
@@ -77,34 +75,51 @@ export default function Admin() {
   )
 }
 
-/* -------------------- POSTS -------------------- */
+/* ==================== POSTS ADMIN ==================== */
 
 function PostsAdmin() {
-  const [rows, setRows] = useState<PostRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [editing, setEditing] = useState<PostRow | null>(null)
+  const { data: posts, loading, error, reload } = useAllPosts()
+  const [editing, setEditing] = useState<BlogPost | null>(null)
+  const [isNew, setIsNew] = useState(false)
 
-  async function load() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('updated_at', { ascending: false })
-    if (error) setError(error.message)
-    setRows((data as PostRow[]) || [])
-    setLoading(false)
+  async function handleDelete(post: BlogPost) {
+    if (!confirm(`Delete "${post.title}"? This cannot be undone.`)) return
+    
+    try {
+      // Delete cover image if exists
+      if (post.coverImage) {
+        await deleteCoverImage(post.coverImage)
+      }
+      await deletePost(post.id)
+      if (editing?.id === post.id) {
+        setEditing(null)
+        setIsNew(false)
+      }
+      reload()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete')
+    }
   }
-  useEffect(() => { load() }, []) // eslint-disable-line
 
-  async function remove(id: string, cover_path?: string | null) {
-    if (!confirm('Delete this post? This will also remove its cover image.')) return
-    const { error } = await supabase.from('posts').delete().eq('id', id)
-    if (error) return alert(error.message)
-    // best-effort storage cleanup
-    try { await storageRemove(cover_path) } catch {}
-    setRows(r => r.filter(x => x.id !== id))
-    if (editing?.id === id) setEditing(null)
+  function handleNew() {
+    setEditing(null)
+    setIsNew(true)
+  }
+
+  function handleEdit(post: BlogPost) {
+    setEditing(post)
+    setIsNew(false)
+  }
+
+  function handleCancel() {
+    setEditing(null)
+    setIsNew(false)
+  }
+
+  function handleSaved() {
+    setEditing(null)
+    setIsNew(false)
+    reload()
   }
 
   return (
@@ -112,7 +127,10 @@ function PostsAdmin() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-stone-100">Your posts</h2>
-          <button className="text-sm rounded-lg border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => setEditing(null)}>
+          <button 
+            className="text-sm rounded-lg border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+            onClick={handleNew}
+          >
             New
           </button>
         </div>
@@ -121,24 +139,35 @@ function PostsAdmin() {
           <p className="text-stone-400 text-sm">Loading…</p>
         ) : error ? (
           <p className="text-rose-400 text-sm">Error: {error}</p>
-        ) : rows.length === 0 ? (
+        ) : !posts?.length ? (
           <p className="text-stone-400 text-sm">No posts yet.</p>
         ) : (
           <ul className="space-y-2">
-            {rows.map(p => (
-              <li key={p.id} className="rounded-lg border border-stone-800 bg-stone-900/40 px-3 py-2 flex items-center justify-between gap-3">
+            {posts.map(post => (
+              <li key={post.id} className="rounded-lg border border-stone-800 bg-stone-900/40 px-3 py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-medium text-stone-100 truncate">{p.title}</div>
-                  <div className="text-xs text-stone-400">{p.is_published ? 'Published' : 'Draft'} • {p.slug}</div>
+                  <div className="font-medium text-stone-100 truncate">{post.title}</div>
+                  <div className="text-xs text-stone-400">
+                    {post.draft ? 'Draft' : 'Published'} • {post.slug}
+                  </div>
                 </div>
                 <div className="shrink-0 flex items-center gap-2">
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => setEditing(p)}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+                    onClick={() => handleEdit(post)}
+                  >
                     Edit
                   </button>
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => window.open(`/blog/${p.slug}`, '_blank')}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+                    onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                  >
                     Preview
                   </button>
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => remove(p.id, p.cover_path)}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900 text-rose-400" 
+                    onClick={() => handleDelete(post)}
+                  >
                     Delete
                   </button>
                 </div>
@@ -149,132 +178,271 @@ function PostsAdmin() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-semibold text-stone-100">{editing ? 'Edit post' : 'New post'}</h2>
-        <PostForm
-          key={editing?.id || 'new'}
-          initial={editing || null}
-          onSaved={() => { setEditing(null); load() }}
-        />
+        {(editing || isNew) && (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-stone-100">
+                {editing ? 'Edit post' : 'New post'}
+              </h2>
+              <button 
+                className="text-xs text-stone-400 hover:text-stone-200"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+            </div>
+            <PostForm
+              key={editing?.id || 'new'}
+              initial={editing}
+              onSaved={handleSaved}
+            />
+          </>
+        )}
+        {!editing && !isNew && (
+          <div className="text-stone-400 text-sm">
+            Select a post to edit or create a new one.
+          </div>
+        )}
       </section>
     </div>
   )
 }
 
-function PostForm({ initial, onSaved }: { initial: PostRow | null; onSaved: () => void }) {
+/* ==================== POST FORM ==================== */
+
+function PostForm({ initial, onSaved }: { initial: BlogPost | null; onSaved: () => void }) {
   const isEdit = Boolean(initial?.id)
+  
   const [title, setTitle] = useState(initial?.title || '')
   const [slug, setSlug] = useState(initial?.slug || '')
   const [summary, setSummary] = useState(initial?.summary || '')
-  const [content, setContent] = useState(initial?.content_md || '')
+  const [markdown, setMarkdown] = useState(initial?.markdown || '')
   const [tags, setTags] = useState((initial?.tags || []).join(', '))
-  const [publ, setPubl] = useState(initial?.is_published || false)
-  const [coverPath, setCoverPath] = useState<string | null>(initial?.cover_path || null)
-  const coverUrl = useMemo(() => storagePublicUrl(coverPath), [coverPath])
-  const [msg, setMsg] = useState<string | null>(null)
+  const [draft, setDraft] = useState(initial?.draft ?? true)
+  const [coverImage, setCoverImage] = useState<string | null>(initial?.coverImage || null)
+  const [uploading, setUploading] = useState(false)
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  // auto-generate slug
-  useEffect(() => { if (!isEdit && title && !slug) setSlug(slugify(title)) }, [title, slug, isEdit])
-
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    try {
-      const path = await storageUpload(f)
-      // optional: delete old cover if replacing
-      if (coverPath) { try { await storageRemove(coverPath) } catch {} }
-      setCoverPath(path)
-    } catch (err: any) {
-      setMsg(err.message || 'Upload failed')
+  // Auto-generate slug from title (only for new posts)
+  function handleTitleChange(value: string) {
+    setTitle(value)
+    if (!isEdit && value && !slug) {
+      setSlug(slugify(value))
     }
   }
 
-  function toTagArray(s: string) {
-    return s.split(',').map(t => t.trim()).filter(Boolean)
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      setMsg({ type: 'error', text: validation.error! })
+      return
+    }
+
+    setUploading(true)
+    setMsg(null)
+
+    try {
+      // Delete old image if replacing
+      if (coverImage) {
+        await deleteCoverImage(coverImage)
+      }
+      const url = await uploadCoverImage(file, 'posts')
+      setCoverImage(url)
+    } catch (err) {
+      setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Upload failed' })
+    } finally {
+      setUploading(false)
+    }
   }
 
-  async function isSlugTaken(s: string) {
-    if (!s) return false
-    const { data } = await supabase.from('posts').select('id,slug').ilike('slug', s).limit(1)
-    return (data?.length || 0) > 0 && (!initial || s !== initial.slug)
+  async function handleRemoveImage() {
+    if (!coverImage) return
+    
+    try {
+      await deleteCoverImage(coverImage)
+      setCoverImage(null)
+    } catch (err) {
+      console.warn('Failed to delete image:', err)
+      setCoverImage(null)
+    }
   }
 
-  async function save(e: React.FormEvent) {
+  function parseTagsInput(input: string): string[] {
+    return input.split(',').map(t => t.trim()).filter(Boolean)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setMsg(null)
-    if (await isSlugTaken(slug)) return setMsg('Slug already in use.')
+    setSaving(true)
 
-    const payload = {
-      slug,
-      title,
-      summary,
-      content_md: content,
-      cover_path: coverPath,
-      cover_url: coverUrl,
-      tags: toTagArray(tags),
-      is_published: publ,
-      published_at: publ ? new Date().toISOString() : null,
+    try {
+      // Validate slug uniqueness
+      const slugAvailable = await isSlugAvailable(slug, initial?.id)
+      if (!slugAvailable) {
+        setMsg({ type: 'error', text: 'Slug is already in use' })
+        setSaving(false)
+        return
+      }
+
+      const payload = {
+        title,
+        slug,
+        summary,
+        markdown,
+        coverImage,
+        tags: parseTagsInput(tags),
+        draft,
+        publishedAt: draft ? null : (initial?.publishedAt || Timestamp.now()),
+      }
+
+      if (isEdit && initial) {
+        await updatePost(initial.id, payload)
+      } else {
+        await createPost(payload as any)
+      }
+
+      setMsg({ type: 'success', text: 'Saved!' })
+      setTimeout(() => onSaved(), 500)
+    } catch (err) {
+      setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Save failed' })
+    } finally {
+      setSaving(false)
     }
-
-    const q = isEdit
-      ? supabase.from('posts').update(payload).eq('id', initial!.id)
-      : supabase.from('posts').insert(payload)
-
-    const { error } = await q
-    setMsg(error ? error.message : 'Saved!')
-    if (!error) onSaved()
   }
 
   return (
-    <form onSubmit={save} className="space-y-2">
-      <Input placeholder="Title" value={title} onChange={setTitle} required />
-      <Input placeholder="Slug (my-post)" value={slug} onChange={setSlug} required />
-      <Input placeholder="Summary" value={summary} onChange={setSummary} />
-      <Textarea placeholder="Markdown content" value={content} onChange={setContent} rows={8} />
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <Input 
+        placeholder="Title" 
+        value={title} 
+        onChange={handleTitleChange} 
+        required 
+      />
+      <Input 
+        placeholder="Slug (my-post)" 
+        value={slug} 
+        onChange={setSlug} 
+        required 
+      />
+      <Input 
+        placeholder="Summary" 
+        value={summary} 
+        onChange={setSummary} 
+      />
+      <Textarea 
+        placeholder="Markdown content" 
+        value={markdown} 
+        onChange={setMarkdown} 
+        rows={10} 
+      />
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         <label className="text-sm text-stone-300">Cover image</label>
-        <input type="file" accept="image/*" onChange={onPickFile} />
-        {coverUrl && <img src={coverUrl} alt="" className="mt-2 max-h-32 rounded border border-stone-800" />}
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={handleImageUpload}
+          disabled={uploading}
+          className="text-sm text-stone-400"
+        />
+        {uploading && <p className="text-xs text-stone-400">Uploading…</p>}
+        {coverImage && (
+          <div className="relative inline-block">
+            <img 
+              src={coverImage} 
+              alt="" 
+              className="mt-2 max-h-32 rounded border border-stone-800" 
+            />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute top-3 right-1 bg-black/70 rounded px-1.5 py-0.5 text-xs text-rose-400 hover:text-rose-300"
+            >
+              Remove
+            </button>
+          </div>
+        )}
       </div>
 
-      <Input placeholder="Tags (comma-separated)" value={tags} onChange={setTags} />
-      <Toggle checked={publ} onChange={setPubl} label="Publish now" />
+      <Input 
+        placeholder="Tags (comma-separated)" 
+        value={tags} 
+        onChange={setTags} 
+      />
+      
+      <Toggle 
+        checked={!draft} 
+        onChange={(checked) => setDraft(!checked)} 
+        label="Publish now" 
+      />
 
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary">Save</button>
-        {msg && <p className="text-sm text-stone-300 self-center">{msg}</p>}
+      <div className="flex items-center gap-3">
+        <button 
+          type="submit" 
+          disabled={saving}
+          className="btn-primary disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {msg && (
+          <p className={`text-sm ${msg.type === 'error' ? 'text-rose-400' : 'text-emerald-400'}`}>
+            {msg.text}
+          </p>
+        )}
       </div>
     </form>
   )
 }
 
-/* -------------------- PROJECTS -------------------- */
+/* ==================== PROJECTS ADMIN ==================== */
 
 function ProjectsAdmin() {
-  const [rows, setRows] = useState<ProjectRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [editing, setEditing] = useState<ProjectRow | null>(null)
+  const { data: projects, loading, error, reload } = useAllProjects()
+  const [editing, setEditing] = useState<Project | null>(null)
+  const [isNew, setIsNew] = useState(false)
 
-  async function load() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('updated_at', { ascending: false })
-    if (error) setError(error.message)
-    setRows((data as ProjectRow[]) || [])
-    setLoading(false)
+  async function handleDelete(project: Project) {
+    if (!confirm(`Delete "${project.title}"? This cannot be undone.`)) return
+    
+    try {
+      if (project.coverImage) {
+        await deleteCoverImage(project.coverImage)
+      }
+      await deleteProject(project.id)
+      if (editing?.id === project.id) {
+        setEditing(null)
+        setIsNew(false)
+      }
+      reload()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete')
+    }
   }
-  useEffect(() => { load() }, []) // eslint-disable-line
 
-  async function remove(id: string, cover_path?: string | null) {
-    if (!confirm('Delete this project? This will also remove its cover image.')) return
-    const { error } = await supabase.from('projects').delete().eq('id', id)
-    if (error) return alert(error.message)
-    try { await storageRemove(cover_path) } catch {}
-    setRows(r => r.filter(x => x.id !== id))
-    if (editing?.id === id) setEditing(null)
+  function handleNew() {
+    setEditing(null)
+    setIsNew(true)
+  }
+
+  function handleEdit(project: Project) {
+    setEditing(project)
+    setIsNew(false)
+  }
+
+  function handleCancel() {
+    setEditing(null)
+    setIsNew(false)
+  }
+
+  function handleSaved() {
+    setEditing(null)
+    setIsNew(false)
+    reload()
   }
 
   return (
@@ -282,7 +450,10 @@ function ProjectsAdmin() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-stone-100">Your projects</h2>
-          <button className="text-sm rounded-lg border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => setEditing(null)}>
+          <button 
+            className="text-sm rounded-lg border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+            onClick={handleNew}
+          >
             New
           </button>
         </div>
@@ -291,24 +462,42 @@ function ProjectsAdmin() {
           <p className="text-stone-400 text-sm">Loading…</p>
         ) : error ? (
           <p className="text-rose-400 text-sm">Error: {error}</p>
-        ) : rows.length === 0 ? (
+        ) : !projects?.length ? (
           <p className="text-stone-400 text-sm">No projects yet.</p>
         ) : (
           <ul className="space-y-2">
-            {rows.map(p => (
-              <li key={p.id} className="rounded-lg border border-stone-800 bg-stone-900/40 px-3 py-2 flex items-center justify-between gap-3">
+            {projects.map(project => (
+              <li key={project.id} className="rounded-lg border border-stone-800 bg-stone-900/40 px-3 py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-medium text-stone-100 truncate">{p.name}</div>
-                  <div className="text-xs text-stone-400">{p.is_published ? 'Published' : 'Draft'} • {p.slug}</div>
+                  <div className="font-medium text-stone-100 truncate flex items-center gap-2">
+                    {project.title}
+                    {project.featured && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-stone-400">
+                    {project.draft ? 'Draft' : 'Published'} • {project.slug}
+                  </div>
                 </div>
                 <div className="shrink-0 flex items-center gap-2">
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => setEditing(p)}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+                    onClick={() => handleEdit(project)}
+                  >
                     Edit
                   </button>
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => window.open(`/projects/${p.slug}`, '_blank')}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" 
+                    onClick={() => window.open(`/projects/${project.slug}`, '_blank')}
+                  >
                     Preview
                   </button>
-                  <button className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900" onClick={() => remove(p.id, p.cover_path)}>
+                  <button 
+                    className="text-xs rounded border border-stone-700 px-2 py-1 hover:bg-stone-900 text-rose-400" 
+                    onClick={() => handleDelete(project)}
+                  >
                     Delete
                   </button>
                 </div>
@@ -319,192 +508,335 @@ function ProjectsAdmin() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-semibold text-stone-100">{editing ? 'Edit project' : 'New project'}</h2>
-        <ProjectForm
-          key={editing?.id || 'new'}
-          initial={editing || null}
-          onSaved={() => { setEditing(null); load() }}
-        />
+        {(editing || isNew) && (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-stone-100">
+                {editing ? 'Edit project' : 'New project'}
+              </h2>
+              <button 
+                className="text-xs text-stone-400 hover:text-stone-200"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+            </div>
+            <ProjectForm
+              key={editing?.id || 'new'}
+              initial={editing}
+              onSaved={handleSaved}
+            />
+          </>
+        )}
+        {!editing && !isNew && (
+          <div className="text-stone-400 text-sm">
+            Select a project to edit or create a new one.
+          </div>
+        )}
       </section>
     </div>
   )
 }
 
-function ProjectForm({ initial, onSaved }: { initial: ProjectRow | null; onSaved: () => void }) {
+/* ==================== PROJECT FORM ==================== */
+
+function ProjectForm({ initial, onSaved }: { initial: Project | null; onSaved: () => void }) {
   const isEdit = Boolean(initial?.id)
-  const [name, setName] = useState(initial?.name || '')
+  
+  const [title, setTitle] = useState(initial?.title || '')
   const [slug, setSlug] = useState(initial?.slug || '')
-  const [oneLiner, setOneLiner] = useState(initial?.one_liner || '')
-  const [details, setDetails] = useState(initial?.details_md || '')
-  const [linksLive, setLinksLive] = useState(initial?.links?.live || '')
-  const [linksRepo, setLinksRepo] = useState(initial?.links?.repo || '')
+  const [summary, setSummary] = useState(initial?.summary || '')
+  const [liveUrl, setLiveUrl] = useState(initial?.liveUrl || '')
+  const [repoUrl, setRepoUrl] = useState(initial?.repoUrl || '')
+  const [techStack, setTechStack] = useState((initial?.techStack || []).join(', '))
   const [tags, setTags] = useState((initial?.tags || []).join(', '))
-  const [publ, setPubl] = useState(initial?.is_published || false)
-  const [coverPath, setCoverPath] = useState<string | null>(initial?.cover_path || null)
-  const coverUrl = useMemo(() => storagePublicUrl(coverPath), [coverPath])
-  const [msg, setMsg] = useState<string | null>(null)
+  const [featured, setFeatured] = useState(initial?.featured ?? false)
+  const [draft, setDraft] = useState(initial?.draft ?? true)
+  const [requiresAuth, setRequiresAuth] = useState(initial?.requiresAuth ?? false)
+  const [accessRequestEnabled, setAccessRequestEnabled] = useState(initial?.accessRequestEnabled ?? false)
+  const [coverImage, setCoverImage] = useState<string | null>(initial?.coverImage || null)
+  const [uploading, setUploading] = useState(false)
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  // auto-generate slug
-  useEffect(() => { if (!isEdit && name && !slug) setSlug(slugify(name)) }, [name, slug, isEdit])
-
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    try {
-      const path = await storageUpload(f)
-      if (coverPath) { try { await storageRemove(coverPath) } catch {} }
-      setCoverPath(path)
-    } catch (err: any) {
-      setMsg(err.message || 'Upload failed')
+  function handleTitleChange(value: string) {
+    setTitle(value)
+    if (!isEdit && value && !slug) {
+      setSlug(slugify(value))
     }
   }
 
-  async function isSlugTaken(s: string) {
-    if (!s) return false
-    const { data } = await supabase.from('projects').select('id,slug').ilike('slug', s).limit(1)
-    return (data?.length || 0) > 0 && (!initial || s !== initial.slug)
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      setMsg({ type: 'error', text: validation.error! })
+      return
+    }
+
+    setUploading(true)
+    setMsg(null)
+
+    try {
+      if (coverImage) {
+        await deleteCoverImage(coverImage)
+      }
+      const url = await uploadCoverImage(file, 'projects')
+      setCoverImage(url)
+    } catch (err) {
+      setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Upload failed' })
+    } finally {
+      setUploading(false)
+    }
   }
 
-  async function save(e: React.FormEvent) {
+  async function handleRemoveImage() {
+    if (!coverImage) return
+    
+    try {
+      await deleteCoverImage(coverImage)
+      setCoverImage(null)
+    } catch (err) {
+      console.warn('Failed to delete image:', err)
+      setCoverImage(null)
+    }
+  }
+
+  function parseListInput(input: string): string[] {
+    return input.split(',').map(t => t.trim()).filter(Boolean)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setMsg(null)
-    if (await isSlugTaken(slug)) return setMsg('Slug already in use.')
+    setSaving(true)
 
-    const links = {} as Record<string, string>
-    if (linksLive) links.live = linksLive
-    if (linksRepo) links.repo = linksRepo
+    try {
+      const slugAvailable = await isProjectSlugAvailable(slug, initial?.id)
+      if (!slugAvailable) {
+        setMsg({ type: 'error', text: 'Slug is already in use' })
+        setSaving(false)
+        return
+      }
 
-    const payload = {
-      slug,
-      name,
-      one_liner: oneLiner || null,
-      details_md: details || null,
-      cover_path: coverPath,
-      cover_url: coverUrl,
-      links,
-      tags: tags.split(',').map(t=>t.trim()).filter(Boolean),
-      is_published: publ,
-      published_at: publ ? new Date().toISOString() : null,
+      const payload = {
+        title,
+        slug,
+        summary,
+        coverImage,
+        liveUrl: liveUrl || null,
+        repoUrl: repoUrl || null,
+        techStack: parseListInput(techStack),
+        tags: parseListInput(tags),
+        featured,
+        draft,
+        requiresAuth,
+        accessRequestEnabled: requiresAuth ? accessRequestEnabled : false,
+        publishedAt: draft ? null : (initial?.publishedAt || Timestamp.now()),
+      }
+
+      if (isEdit && initial) {
+        await updateProject(initial.id, payload)
+      } else {
+        await createProject(payload as any)
+      }
+
+      setMsg({ type: 'success', text: 'Saved!' })
+      setTimeout(() => onSaved(), 500)
+    } catch (err) {
+      setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Save failed' })
+    } finally {
+      setSaving(false)
     }
-
-    const q = isEdit
-      ? supabase.from('projects').update(payload).eq('id', initial!.id)
-      : supabase.from('projects').insert(payload)
-
-    const { error } = await q
-    setMsg(error ? error.message : 'Saved!')
-    if (!error) onSaved()
   }
 
   return (
-    <form onSubmit={save} className="space-y-2">
-      <Input placeholder="Name" value={name} onChange={setName} required />
-      <Input placeholder="Slug (my-project)" value={slug} onChange={setSlug} required />
-      <Input placeholder="One-liner" value={oneLiner} onChange={setOneLiner} />
-
-      <label className="text-sm text-stone-300">Project details (Markdown)</label>
-      <Textarea placeholder="Write details like a README…" value={details} onChange={setDetails} rows={8} />
-
-      <div className="space-y-1">
-        <label className="text-sm text-stone-300">Cover image</label>
-        <input type="file" accept="image/*" onChange={onPickFile} />
-        {coverUrl && <img src={coverUrl} alt="" className="mt-2 max-h-32 rounded border border-stone-800" />}
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <Input 
+        placeholder="Title" 
+        value={title} 
+        onChange={handleTitleChange} 
+        required 
+      />
+      <Input 
+        placeholder="Slug (my-project)" 
+        value={slug} 
+        onChange={setSlug} 
+        required 
+      />
+      <Input 
+        placeholder="Summary (one-liner)" 
+        value={summary} 
+        onChange={setSummary} 
+      />
 
       <div className="grid grid-cols-2 gap-2">
-        <Input placeholder="Live URL (optional)" value={linksLive} onChange={setLinksLive} />
-        <Input placeholder="Repo URL (optional)" value={linksRepo} onChange={setLinksRepo} />
+        <Input 
+          placeholder="Live URL (optional)" 
+          value={liveUrl} 
+          onChange={setLiveUrl} 
+        />
+        <Input 
+          placeholder="Repo URL (optional)" 
+          value={repoUrl} 
+          onChange={setRepoUrl} 
+        />
       </div>
 
-      <Input placeholder="Tags (comma-separated)" value={tags} onChange={setTags} />
-      <Toggle checked={publ} onChange={setPubl} label="Publish now" />
+      <div className="space-y-2">
+        <label className="text-sm text-stone-300">Cover image</label>
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={handleImageUpload}
+          disabled={uploading}
+          className="text-sm text-stone-400"
+        />
+        {uploading && <p className="text-xs text-stone-400">Uploading…</p>}
+        {coverImage && (
+          <div className="relative inline-block">
+            <img 
+              src={coverImage} 
+              alt="" 
+              className="mt-2 max-h-32 rounded border border-stone-800" 
+            />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute top-3 right-1 bg-black/70 rounded px-1.5 py-0.5 text-xs text-rose-400 hover:text-rose-300"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
 
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary">Save</button>
-        {msg && <p className="text-sm text-stone-300 self-center">{msg}</p>}
+      <Input 
+        placeholder="Tech stack (comma-separated: React, TypeScript, Firebase)" 
+        value={techStack} 
+        onChange={setTechStack} 
+      />
+      <Input 
+        placeholder="Tags (comma-separated: side-project, AI, web-app)" 
+        value={tags} 
+        onChange={setTags} 
+      />
+      
+      <div className="space-y-2 pt-2 border-t border-stone-800">
+        <Toggle 
+          checked={featured} 
+          onChange={setFeatured} 
+          label="Featured on homepage" 
+        />
+        <Toggle 
+          checked={!draft} 
+          onChange={(checked) => setDraft(!checked)} 
+          label="Publish now" 
+        />
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-stone-800">
+        <p className="text-xs text-stone-500">Access Control</p>
+        <Toggle 
+          checked={requiresAuth} 
+          onChange={setRequiresAuth} 
+          label="Requires authentication" 
+        />
+        {requiresAuth && (
+          <Toggle 
+            checked={accessRequestEnabled} 
+            onChange={setAccessRequestEnabled} 
+            label="Enable access request form" 
+          />
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button 
+          type="submit" 
+          disabled={saving}
+          className="btn-primary disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {msg && (
+          <p className={`text-sm ${msg.type === 'error' ? 'text-rose-400' : 'text-emerald-400'}`}>
+            {msg.text}
+          </p>
+        )}
       </div>
     </form>
   )
 }
 
-/* -------------------- inline helpers (no extra files) -------------------- */
+/* ==================== UI COMPONENTS ==================== */
 
-/** Minimal slugify (lowercase, ascii-ish, spaces->dashes) */
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
-
-/** Storage helpers for covers (bucket must be named 'covers' and public) */
-const BUCKET = 'covers'
-
-async function storageUpload(file: File) {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const name = `${crypto.randomUUID()}.${ext}`
-  // upload at bucket root (not nested)
-  const { error } = await supabase.storage.from(BUCKET).upload(name, file, {
-    cacheControl: '3600',
-    upsert: false,
-  })
-  if (error) throw error
-  return `${BUCKET}/${name}` // cover_path
-}
-
-function storagePublicUrl(cover_path?: string | null) {
-  if (!cover_path) return null
-  const [bucket, ...rest] = cover_path.split('/')
-  const key = rest.join('/')
-  const { data } = supabase.storage.from(bucket).getPublicUrl(key)
-  return data.publicUrl
-}
-
-async function storageRemove(cover_path?: string | null) {
-  if (!cover_path) return
-  const [bucket, ...rest] = cover_path.split('/')
-  const key = rest.join('/')
-  await supabase.storage.from(bucket).remove([key])
-}
-
-/* -------------------- tiny UI atoms -------------------- */
-
-function Input(props: { placeholder?: string; value: string; onChange: (v: string)=>void; required?: boolean }) {
+function Input({ 
+  placeholder, 
+  value, 
+  onChange, 
+  required 
+}: { 
+  placeholder?: string
+  value: string
+  onChange: (value: string) => void
+  required?: boolean 
+}) {
   return (
     <input
-      {...props}
-      onChange={(e) => props.onChange(e.target.value)}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      required={required}
       className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
                  placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
     />
   )
 }
-function Textarea(props: { placeholder?: string; value: string; rows?: number; onChange: (v: string)=>void }) {
+
+function Textarea({ 
+  placeholder, 
+  value, 
+  rows = 4, 
+  onChange 
+}: { 
+  placeholder?: string
+  value: string
+  rows?: number
+  onChange: (value: string) => void 
+}) {
   return (
     <textarea
-      {...props}
-      onChange={(e) => props.onChange(e.target.value)}
+      placeholder={placeholder}
+      value={value}
+      rows={rows}
+      onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
                  placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
     />
   )
 }
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v:boolean)=>void; label: string }) {
+
+function Toggle({ 
+  checked, 
+  onChange, 
+  label 
+}: { 
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string 
+}) {
   return (
-    <label className="flex items-center gap-2 text-sm text-stone-300">
-      <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} />
+    <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer">
+      <input 
+        type="checkbox" 
+        checked={checked} 
+        onChange={(e) => onChange(e.target.checked)}
+        className="rounded border-stone-600 bg-stone-800 text-emerald-500 focus:ring-emerald-500/60"
+      />
       {label}
     </label>
   )
 }
-
-/* Tailwind-friendly primary button class (inline here for convenience) */
-declare global {
-  interface HTMLElementTagNameMap {
-    // no-op, keep TS happy if needed
-  }
-}
-// If you prefer a class, replace all "btn-primary" usages with the below:
-// .btn-primary { @apply rounded-lg bg-emerald-400 text-black px-4 py-2 text-sm font-medium hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/60; }

@@ -1,28 +1,17 @@
+// src/routes/Home.tsx
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { useProjects } from '../lib/useSupabase'
+import { useFeaturedProjects, useProjects } from '../hooks/useProjects'
+import type { Project } from '../lib/types'
 
 export default function Home() {
-  const { data: projects } = useProjects()
-  const featured = (() => {
-  if (!projects?.length) return null
-
-  // 1) Exact slug match (your canonical slug)
-  let pick = projects.find((p: any) => p.slug === 'Explorer-Lab')
-  if (pick) return pick
-
-  // 2) Case-insensitive slug fallback (handles explorer-lab, EXPLORER-LAB, etc.)
-  pick = projects.find((p: any) => p.slug?.toLowerCase() === 'explorer-lab')
-  if (pick) return pick
-
-  // 3) Name contains "Explorer Lab" (case-insensitive), in case slug changes
-  pick = projects.find((p: any) => p.name?.toLowerCase().includes('explorer lab'))
-  if (pick) return pick
-
-  // 4) Fallback to first project
-  return projects[0]
-})()
+  const { data: featuredProjects } = useFeaturedProjects(1)
+  const { data: allProjects } = useProjects()
+  
+  // Get the featured project, or fallback to first project
+  const featured: Project | null = featuredProjects?.[0] || allProjects?.[0] || null
+  
   const prefersReducedMotion = useReducedMotion()
 
   const phrases = [
@@ -101,19 +90,19 @@ export default function Home() {
         <section aria-label="Featured build">
           <div className="flex items-start gap-5">
             <div className="w-32 h-20 rounded-md overflow-hidden bg-stone-800 shrink-0">
-              {featured.cover_url && (
+              {featured.coverImage && (
                 <img
-                  src={featured.cover_url}
-                  alt={`${featured.name} cover`}
+                  src={featured.coverImage}
+                  alt={`${featured.title} cover`}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
               )}
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl font-semibold text-stone-100">{featured.name}</h2>
+              <h2 className="text-xl font-semibold text-stone-100">{featured.title}</h2>
               <p className="text-stone-300 text-sm mt-1">
-                {featured.one_liner}
+                {featured.summary}
               </p>
               <div className="mt-3 flex gap-4 text-sm">
                 <Link
@@ -122,10 +111,10 @@ export default function Home() {
                 >
                   All Builds
                 </Link>
-                {featured.links?.live && (
+                {featured.liveUrl && (
                   <a
                     className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400"
-                    href={featured.links.live}
+                    href={featured.liveUrl}
                     target="_blank"
                     rel="noreferrer"
                   >

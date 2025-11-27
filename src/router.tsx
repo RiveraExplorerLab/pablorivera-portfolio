@@ -11,30 +11,29 @@ import Community from './routes/Community'
 import Login from './routes/Login'
 import Admin from './routes/Admin'
 import AdminCommunity from './routes/AdminCommunity'
+import AdminAccess from './routes/AdminAccess'
 import ProjectDetail from './routes/ProjectDetail'
-
-// Optional: simple 404 page
-function NotFound() {
-  return <div className="text-sm text-neutral-300">Not found. <a className="underline" href="/">Go home</a></div>
-}
+import NotFound from './routes/NotFound'
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
-    errorElement: <NotFound />,
+    errorElement: <RootLayout />,
     children: [
-      { index: true, element: <Home /> },             // "/" goes to Home
+      { index: true, element: <Home /> },
       { path: 'about', element: <About /> },
       { path: 'projects', element: <Projects /> },
+      { path: 'projects/:slug', element: <ProjectDetail /> },
       { path: 'stack', element: <Stack /> },
       { path: 'blog', element: <Blog /> },
-      { path: 'blog/:slug', element: <Post /> },      // dynamic blog post
-      { path: 'projects/:slug', element: <ProjectDetail /> },
+      { path: 'blog/:slug', element: <Post /> },
       { path: 'community', element: <Community /> },
       { path: 'login', element: <Login /> },
       { path: 'admin', element: <Admin /> },
       { path: 'admin/community', element: <AdminCommunity /> },
+      { path: 'admin/access', element: <AdminAccess /> },
+      { path: '*', element: <NotFound /> },
     ],
   },
 ])

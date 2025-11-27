@@ -3,7 +3,11 @@ import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { 
+  createNewsletterSignup, 
+  createEarlyAccessSignup, 
+  isEmailSignedUp 
+} from '../lib/communitySignups'
 
 export default function Community() {
   useEffect(() => {
@@ -54,17 +58,17 @@ export default function Community() {
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
           <Card title="Newsletter">
-            Short, occasional notes on what I’m building and why it matters.
+            Short, occasional notes on what I'm building and why it matters.
             <div className="mt-3"><NewsletterForm /></div>
           </Card>
 
           <Card title="Early-access testers">
-            Try tiny tools before they’re public. I want blunt, kind feedback.
+            Try tiny tools before they're public. I want blunt, kind feedback.
             <div className="mt-3"><WaitlistForm label="Join early-access waitlist" tag="ea" /></div>
           </Card>
 
           <Card title="Feedback & ideas">
-            Have a clunky workflow? Tell me. If it’s small and clear, I might build it.
+            Have a clunky workflow? Tell me. If it's small and clear, I might build it.
             <div className="mt-3">
               <a
                 className="underline decoration-emerald-500/50 underline-offset-4 hover:decoration-emerald-400 text-sm"
@@ -108,13 +112,13 @@ export default function Community() {
         </h2>
         <div className="space-y-2">
           <Faq q="How often is the newsletter?">
-            Irregular but thoughtful — only when there’s something worth your time.
+            Irregular but thoughtful — only when there's something worth your time.
           </Faq>
           <Faq q="What do early-access testers do?">
-            You’ll get links to small prototypes. Kick the tires; tell me what’s confusing or slow.
+            You'll get links to small prototypes. Kick the tires; tell me what's confusing or slow.
           </Faq>
           <Faq q="Will this be open source?">
-            Some things, yes. Others will be write-ups. I share what’s most useful.
+            Some things, yes. Others will be write-ups. I share what's most useful.
           </Faq>
         </div>
       </section>
@@ -155,7 +159,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   )
 }
 
-/** Newsletter form → Supabase insert */
+/** Newsletter form → Firebase insert */
 function NewsletterForm() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'dup' | 'err'>('idle')
@@ -171,31 +175,31 @@ function NewsletterForm() {
     if (botCheck) return
 
     const value = email.trim()
-    const isEmail = /\S+@\S+\.\S+/.test(value)
-    if (!isEmail) {
+    const isValidEmail = /\S+@\S+\.\S+/.test(value)
+    if (!isValidEmail) {
       setStatus('err')
       setErrMsg('Please enter a valid email address.')
       return
     }
 
     setStatus('loading')
-    const { error } = await supabase
-  .from('newsletter_signups')
-  .insert([{ email: value, user_agent: navigator.userAgent }])
 
-    if (error) {
-      console.error('Supabase insert error (newsletter):', error)
-      if ((error as any).code === '23505') {
+    try {
+      // Check for duplicate
+      const isDuplicate = await isEmailSignedUp(value, 'newsletter')
+      if (isDuplicate) {
         setStatus('dup')
-      } else {
-        setStatus('err')
-        setErrMsg(error.message || 'Something went wrong. Please try again.')
+        return
       }
-      return
-    }
 
-    setStatus('ok')
-    setEmail('')
+      await createNewsletterSignup(value, navigator.userAgent)
+      setStatus('ok')
+      setEmail('')
+    } catch (err) {
+      console.error('Newsletter signup error:', err)
+      setStatus('err')
+      setErrMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    }
   }
 
   return (
@@ -229,7 +233,7 @@ function NewsletterForm() {
         {status === 'ok' && (
           <motion.span initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -2 }}
             className="self-center text-xs text-emerald-400">
-            You’re in. Thanks!
+            You're in. Thanks!
           </motion.span>
         )}
         {status === 'dup' && (
@@ -249,7 +253,7 @@ function NewsletterForm() {
   )
 }
 
-/** Early-access form → Supabase insert */
+/** Early-access form → Firebase insert */
 function WaitlistForm({ label, tag }: { label: string; tag: string }) {
   const [email, setEmail] = useState('')
   const [notes, setNotes] = useState('')
@@ -266,32 +270,32 @@ function WaitlistForm({ label, tag }: { label: string; tag: string }) {
     if (botCheck) return
 
     const value = email.trim()
-    const isEmail = /\S+@\S+\.\S+/.test(value)
-    if (!isEmail) {
+    const isValidEmail = /\S+@\S+\.\S+/.test(value)
+    if (!isValidEmail) {
       setStatus('err')
       setErrMsg('Please enter a valid email address.')
       return
     }
 
     setStatus('loading')
-    const { error } = await supabase
-  .from('early_access_waitlist')
-  .insert([{ email: value, notes, tag, user_agent: navigator.userAgent }])
 
-    if (error) {
-      console.error('Supabase insert error (waitlist):', error)
-      if ((error as any).code === '23505') {
+    try {
+      // Check for duplicate
+      const isDuplicate = await isEmailSignedUp(value, 'early-access')
+      if (isDuplicate) {
         setStatus('dup')
-      } else {
-        setStatus('err')
-        setErrMsg(error.message || 'Something went wrong. Please try again.')
+        return
       }
-      return
-    }
 
-    setStatus('ok')
-    setEmail('')
-    setNotes('')
+      await createEarlyAccessSignup(value, notes, tag, navigator.userAgent)
+      setStatus('ok')
+      setEmail('')
+      setNotes('')
+    } catch (err) {
+      console.error('Early access signup error:', err)
+      setStatus('err')
+      setErrMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    }
   }
 
   return (
