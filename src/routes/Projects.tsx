@@ -19,7 +19,7 @@ export default function Projects() {
         <p className="text-stone-300 mt-1">A running log of what I've been building.</p>
       </header>
 
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul className="space-y-4" style={{ marginLeft: '-1rem', marginRight: '-1rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
         {projects?.map((project: Project, i: number) => (
           <motion.li
             key={project.id}
@@ -28,63 +28,66 @@ export default function Projects() {
             viewport={{ once: true }}
             transition={{ duration: 0.2, delay: i * 0.03 }}
             whileHover={{ y: -4, scale: 1.01 }}
-            className="card p-5"
           >
-            <div className="flex gap-4">
-              <div className="w-24 h-16 rounded-lg overflow-hidden bg-white/5 shrink-0 border border-white/10">
-                {project.coverImage && (
-                  <img
-                    src={project.coverImage}
-                    alt={`${project.title} cover`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                )}
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-semibold text-stone-100">
-                  <Link to={`/projects/${project.slug}`} className="hover:text-teal-300 transition-colors">
+            <Link
+              to={`/projects/${project.slug}`}
+              className="group block card p-5 focus:outline-none focus:ring-2 focus:ring-teal-500/60"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-16 rounded-lg overflow-hidden bg-white/5 shrink-0 border border-white/10">
+                  {project.coverImage && (
+                    <img
+                      src={project.coverImage}
+                      alt={`${project.title} cover`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-stone-100 group-hover:text-teal-300 transition-colors">
                     {project.title}
-                  </Link>
-                </h2>
-                {project.summary && (
-                  <p className="text-sm text-stone-300 mt-1 line-clamp-2">{project.summary}</p>
-                )}
-                {project.liveUrl && (
-                  <a
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-teal-400 hover:text-teal-300 text-sm mt-2 block transition-colors"
-                  >
-                    Try it Live ↗
-                  </a>
-                )}
+                  </h2>
+                  {project.summary && (
+                    <p className="text-sm text-stone-300 mt-1">{project.summary}</p>
+                  )}
+                  {project.liveUrl && (
+                    <a
+                      href={project.liveUrl}
+                      onClick={(e) => e.stopPropagation()}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-teal-400 hover:text-teal-300 text-sm mt-2 block transition-colors"
+                    >
+                      Try it Live ↗
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            {/* Tech stack tags */}
-            {project.techStack && project.techStack.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {project.techStack.slice(0, 4).map((tech) => (
-                  <span
-                    key={tech}
-                    className="text-[10px] px-2 py-0.5 rounded-full text-stone-400"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    {tech}
-                  </span>
-                ))}
-                {project.techStack.length > 4 && (
-                  <span className="text-[10px] px-2 py-0.5 text-stone-500">
-                    +{project.techStack.length - 4} more
-                  </span>
-                )}
-              </div>
-            )}
+              
+              {/* Tech stack tags */}
+              {project.techStack && project.techStack.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {project.techStack.slice(0, 4).map((tech) => (
+                    <span
+                      key={tech}
+                      className="text-[10px] px-2 py-0.5 rounded-full text-stone-400"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                  {project.techStack.length > 4 && (
+                    <span className="text-[10px] px-2 py-0.5 text-stone-500">
+                      +{project.techStack.length - 4} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
           </motion.li>
         ))}
       </ul>

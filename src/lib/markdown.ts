@@ -1,6 +1,89 @@
 // src/lib/markdown.ts
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { createHighlighter, type Highlighter } from 'shiki'
+
+// Singleton highlighter instance
+let highlighterPromise: Promise<Highlighter> | null = null
+
+/**
+ * Get or create the Shiki highlighter instance
+ */
+async function getHighlighter(): Promise<Highlighter> {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighter({
+      themes: ['github-dark', 'github-light'],
+      langs: [
+        'javascript',
+        'typescript',
+        'jsx',
+        'tsx',
+        'html',
+        'css',
+        'json',
+        'markdown',
+        'bash',
+        'shell',
+        'python',
+        'rust',
+        'go',
+        'sql',
+        'yaml',
+        'toml',
+        'diff',
+      ],
+    })
+  }
+  return highlighterPromise
+}
+
+/**
+ * Highlight code with Shiki
+ */
+async function highlightCode(code: string, lang: string): Promise<string> {
+  try {
+    const highlighter = await getHighlighter()
+    
+    // Map common language aliases
+    const langMap: Record<string, string> = {
+      'js': 'javascript',
+      'ts': 'typescript',
+      'sh': 'bash',
+      'zsh': 'bash',
+      'yml': 'yaml',
+      'py': 'python',
+      'rs': 'rust',
+    }
+    
+    const normalizedLang = langMap[lang] || lang
+    const supportedLangs = highlighter.getLoadedLanguages()
+    
+    if (!supportedLangs.includes(normalizedLang as any)) {
+      // Fallback to plain text styling
+      return `<pre class="shiki" style="background-color:#0d1117;color:#c9d1d9"><code>${escapeHtml(code)}</code></pre>`
+    }
+    
+    return highlighter.codeToHtml(code, {
+      lang: normalizedLang,
+      theme: 'github-dark',
+    })
+  } catch (error) {
+    console.error('Shiki highlighting error:', error)
+    return `<pre><code>${escapeHtml(code)}</code></pre>`
+  }
+}
+
+/**
+ * Escape HTML characters
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 // Configure marked options
 marked.setOptions({
@@ -9,9 +92,8 @@ marked.setOptions({
 })
 
 /**
- * Render Markdown to sanitized HTML
- * @param md - The markdown string to render
- * @returns Sanitized HTML string
+ * Render Markdown to sanitized HTML (sync version - no syntax highlighting)
+ * Use renderMarkdownAsync for syntax highlighting
  */
 export function renderMarkdown(md: string): string {
   if (!md) return ''
@@ -21,7 +103,64 @@ export function renderMarkdown(md: string): string {
   // Sanitize to prevent XSS
   const cleanHtml = DOMPurify.sanitize(rawHtml, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['target', 'rel'], // Allow target="_blank" on links
+    ADD_ATTR: ['target', 'rel', 'style', 'class'],
+  })
+  
+  return cleanHtml
+}
+
+/**
+ * Render Markdown to sanitized HTML with Shiki syntax highlighting
+ */
+export async function renderMarkdownAsync(md: string): Promise<string> {
+  if (!md) return ''
+  
+  // First, extract and highlight all code blocks
+  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g
+  const codeBlocks: { placeholder: string; highlighted: string }[] = []
+  
+  let match
+  // Collect all code blocks
+  const matches: { full: string; lang: string; code: string }[] = []
+  while ((match = codeBlockRegex.exec(md)) !== null) {
+    matches.push({
+      full: match[0],
+      lang: match[1] || 'text',
+      code: match[2].trim(),
+    })
+  }
+  
+  // Highlight all code blocks in parallel
+  const highlightedBlocks = await Promise.all(
+    matches.map(async (m, i) => {
+      const highlighted = await highlightCode(m.code, m.lang)
+      const placeholder = `__CODE_BLOCK_${i}__`
+      return { full: m.full, placeholder, highlighted }
+    })
+  )
+  
+  // Replace code blocks with placeholders
+  let processedMd = md
+  for (const block of highlightedBlocks) {
+    processedMd = processedMd.replace(block.full, block.placeholder)
+    codeBlocks.push({ placeholder: block.placeholder, highlighted: block.highlighted })
+  }
+  
+  // Parse markdown
+  const rawHtml = marked.parse(processedMd) as string
+  
+  // Replace placeholders with highlighted code
+  let finalHtml = rawHtml
+  for (const block of codeBlocks) {
+    finalHtml = finalHtml.replace(`<p>${block.placeholder}</p>`, block.highlighted)
+    finalHtml = finalHtml.replace(block.placeholder, block.highlighted)
+  }
+  
+  // Sanitize to prevent XSS, but allow Shiki's styles
+  const cleanHtml = DOMPurify.sanitize(finalHtml, {
+    USE_PROFILES: { html: true },
+    ADD_ATTR: ['target', 'rel', 'style', 'class'],
+    ADD_TAGS: ['span'],
   })
   
   return cleanHtml
@@ -29,9 +168,6 @@ export function renderMarkdown(md: string): string {
 
 /**
  * Extract plain text from markdown (for summaries/excerpts)
- * @param md - The markdown string
- * @param maxLength - Maximum length of extracted text
- * @returns Plain text string
  */
 export function extractText(md: string, maxLength = 200): string {
   if (!md) return ''
@@ -60,8 +196,6 @@ export function extractText(md: string, maxLength = 200): string {
 
 /**
  * Count words in markdown (excluding code blocks)
- * @param md - The markdown string
- * @returns Word count
  */
 export function countWords(md: string): number {
   if (!md) return 0
@@ -76,9 +210,6 @@ export function countWords(md: string): number {
 
 /**
  * Estimate reading time
- * @param md - The markdown string
- * @param wordsPerMinute - Reading speed (default 200)
- * @returns Reading time in minutes
  */
 export function estimateReadingTime(md: string, wordsPerMinute = 200): number {
   const words = countWords(md)

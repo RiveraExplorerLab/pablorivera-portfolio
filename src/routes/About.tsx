@@ -13,9 +13,9 @@ export default function About() {
           initial={{ opacity: 0, y: 8 }}
           animate={appear}
           transition={{ duration: 0.2 }}
-          className="text-4xl md:text-5xl font-bold tracking-tight text-stone-100 flex items-center gap-3"
+          className="text-4xl md:text-5xl font-bold tracking-tight text-teal-400 flex items-center gap-3 mb-6"
         >
-          How I Think, How I Work
+          Who I Am & What I Love Building
         </motion.h1>
 
         {/* Headshot + intro paragraph side by side */}
@@ -37,30 +37,20 @@ export default function About() {
 
           <div className="space-y-4 text-stone-300 max-w-3xl">
             <p>
-            I'm a systems thinker — but I'm not just here to map workflows or connect APIs.
-              I build tools that surprise me, the kind that make me stop and think, 
-              <span className="italic"> "Wait… this is actually good."</span>
-              Not just functional, but thoughtful. Not just clever, but clear.
+              I'm someone who likes to understand how things really work — people, tools, processes, all of it. I build things that make life a little clearer, a little easier, and sometimes even a little fun. I love that moment when a tool makes you pause and think, <span className="italic">"Wait… this is actually good."</span> Not flashy — just thoughtful.
             </p>
             <p>
-              Every app, interaction, and idea is a lab experiment — where function meets delight
-              and logic meets curiosity. I want my tools to reflect how people actually think,
-              not just how data moves. I ask deep questions. I look for hidden constraints.
-              I refactor not just the code, but the assumptions.
+              Every app, interaction, and idea for me is a small experiment where function meets curiosity. I want my tools to reflect how people actually think, not just how data moves. I ask deep questions. I look for hidden constraints. I refactor not just the code, but the assumptions.
             </p>
           </div>
         </div>
 
         <div className="space-y-4 text-stone-300 max-w-3xl">
           <p>
-            Sometimes that means designing an internal order system with clean patch logic 
-            and finance-ready audit trails. Sometimes it means a playful terminal prompt
-            that hands you a joke and a tech stack suggestion.
+            Sometimes that means designing an internal order system with clean patch logic and finance-ready audit trails. Other times it's a playful terminal prompt that hands you a tech stack suggestion and a joke.
           </p>
           <p>
-            I don't separate the playful from the purposeful — the best tools do both.
-            For me, building is about discovering what's possible when curiosity
-            is given structure, and creating systems that help people grow — including me.
+            I don't separate the playful from the purposeful — the best tools do both. For me, building is about discovering what's possible when curiosity is given structure, and creating systems that help people grow — including me.
           </p>
         </div>
 

@@ -51,14 +51,18 @@ export default function Blog() {
                   loading="lazy"
                 />
               )}
-              <div className="p-5">
-                <h2 className="text-lg md:text-xl font-semibold text-stone-100 group-hover:text-teal-300 transition-colors">
-                  {post.title}
-                </h2>
-                <div className="mt-1 text-xs text-teal-400/80">
-                  {formatDate(post.publishedAt?.toDate() || post.createdAt.toDate())}
+              <div className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <h2 className="text-lg md:text-xl font-semibold text-stone-100 group-hover:text-teal-300 transition-colors">
+                      {post.title}
+                    </h2>
+                    <p className="text-sm text-stone-300">{post.summary}</p>
+                  </div>
+                  <div className="text-xs text-teal-400/80 shrink-0">
+                    {formatDate(post.publishedAt?.toDate() || post.createdAt.toDate())}
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-stone-300 line-clamp-2">{post.summary}</p>
               </div>
             </Link>
           </motion.li>

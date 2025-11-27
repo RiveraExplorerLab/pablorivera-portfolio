@@ -23,6 +23,11 @@ export type BlogPostInput = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>
 // ============================================
 // Projects
 // ============================================
+export interface ChangelogEntry {
+  title: string
+  content: string  // markdown
+}
+
 export interface Project {
   id: string
   slug: string
@@ -37,6 +42,9 @@ export interface Project {
   draft: boolean
   requiresAuth: boolean
   accessRequestEnabled: boolean
+  technicalDoc: string | null      // markdown
+  userGuide: string | null          // markdown
+  changeLog: ChangelogEntry[]       // array of {title, content}
   createdAt: Timestamp
   updatedAt: Timestamp
   publishedAt: Timestamp | null
@@ -44,25 +52,6 @@ export interface Project {
 
 export type ProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
 
-// ============================================
-// Project Docs (V2 - for future use)
-// ============================================
-export interface ChangelogEntry {
-  version: string
-  date: Timestamp
-  markdown: string
-}
-
-export interface ProjectDoc {
-  id: string
-  type: 'changelog' | 'technical' | 'user-guide'
-  title: string
-  entries?: ChangelogEntry[]  // For changelog type
-  markdown?: string           // For technical/user-guide types
-  order: number
-  createdAt: Timestamp
-  updatedAt: Timestamp
-}
 
 // ============================================
 // Community Signups
