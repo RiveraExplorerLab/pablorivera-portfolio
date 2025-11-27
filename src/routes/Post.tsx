@@ -1,6 +1,7 @@
 // src/routes/Post.tsx
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { usePost } from '../hooks/useBlogPosts'
 import { renderMarkdownAsync, estimateReadingTime } from '../lib/markdown'
 
@@ -32,24 +33,28 @@ export default function Post() {
 
   return (
     <article className="space-y-6">
-      <header className="space-y-2">
+      <motion.header 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-3"
+      >
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
           <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
           {post.title}
         </h1>
-        <div className="text-xs text-stone-400 flex items-center gap-3">
-          <span className="text-teal-400/80">
+        <div className="text-sm text-stone-400 flex items-center gap-3">
+          <span className="gradient-text">
             {publishedDate.toLocaleDateString(undefined, {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             })}
           </span>
-          <span>•</span>
+          <span className="text-stone-600">•</span>
           <span>{readingTime} min read</span>
         </div>
         {post.coverImage && (
-          <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+          <div className="mt-4 rounded-2xl overflow-hidden border border-white/10">
             <img
               src={post.coverImage}
               alt=""
@@ -58,18 +63,14 @@ export default function Post() {
             />
           </div>
         )}
-      </header>
+      </motion.header>
 
       {post.tags && post.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {post.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs px-3 py-1 rounded-full text-stone-300"
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
+              className="text-xs px-3 py-1 rounded-full text-stone-300 glass"
             >
               {tag}
             </span>
@@ -80,9 +81,15 @@ export default function Post() {
       {rendering ? (
         <div className="text-stone-400 text-sm">Rendering content…</div>
       ) : (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
           className="prose prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
-                     [&_.shiki]:rounded-lg [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
+                     prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
+                     prose-strong:text-stone-100 prose-code:text-teal-300
+                     [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
+                     [&_.shiki]:border [&_.shiki]:border-white/10 [&_.shiki]:glass
                      [&_code]:text-sm [&_code]:font-mono"
           dangerouslySetInnerHTML={{ __html: renderedContent }}
         />
