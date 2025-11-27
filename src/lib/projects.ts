@@ -117,7 +117,8 @@ export async function createProject(input: ProjectInput): Promise<string> {
 // ============================================
 
 export async function updateProject(id: string, input: Partial<ProjectInput>): Promise<void> {
-  const updates: Record<string, unknown> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updates: any = {
     ...input,
     updatedAt: Timestamp.now(),
   }

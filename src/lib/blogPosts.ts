@@ -88,7 +88,8 @@ export async function createPost(input: BlogPostInput): Promise<string> {
 // ============================================
 
 export async function updatePost(id: string, input: Partial<BlogPostInput>): Promise<void> {
-  const updates: Record<string, unknown> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updates: any = {
     ...input,
     updatedAt: Timestamp.now(),
   }
