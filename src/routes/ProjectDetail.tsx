@@ -8,6 +8,7 @@ import { createAccessRequest, hasPendingRequest } from '../lib/accessRequests'
 import type { Project } from '../lib/types'
 
 type Tab = 'overview' | 'changelog' | 'docs'
+type DocSection = 'gettingStarted' | 'apiReference' | 'configuration' | 'troubleshooting'
 
 export default function ProjectDetail() {
   const { slug = '' } = useParams()
@@ -32,6 +33,19 @@ export default function ProjectDetail() {
       </div>
     )
   }
+
+  // Determine which tabs to show based on content
+  const hasChangelog = project.changelog && project.changelog.length > 0
+  const hasDocs = project.docs && (
+    project.docs.gettingStarted || 
+    project.docs.apiReference || 
+    project.docs.configuration || 
+    project.docs.troubleshooting
+  )
+
+  const availableTabs: Tab[] = ['overview']
+  if (hasChangelog) availableTabs.push('changelog')
+  if (hasDocs) availableTabs.push('docs')
 
   return (
     <div className="space-y-8">
@@ -153,24 +167,26 @@ export default function ProjectDetail() {
         </div>
       </motion.header>
 
-      {/* Tabs */}
-      <div className="border-b border-white/10">
-        <nav className="flex gap-1" aria-label="Project sections">
-          {(['overview', 'changelog', 'docs'] as Tab[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-all duration-300 ${
-                activeTab === tab
-                  ? 'border-teal-400 text-teal-400'
-                  : 'border-transparent text-stone-400 hover:text-stone-200 hover:border-white/20'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Tabs - Only show if there's more than just overview */}
+      {availableTabs.length > 1 && (
+        <div className="border-b border-white/10">
+          <nav className="flex gap-1" aria-label="Project sections">
+            {availableTabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-all duration-300 ${
+                  activeTab === tab
+                    ? 'border-teal-400 text-teal-400'
+                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:border-white/20'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">
@@ -187,8 +203,8 @@ export default function ProjectDetail() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Request Access Section */}
-      {project.requiresAuth && project.accessRequestEnabled && (
+      {/* Request Access Section - Only show on Overview tab */}
+      {activeTab === 'overview' && project.requiresAuth && project.accessRequestEnabled && (
         <RequestAccessForm project={project} />
       )}
     </div>
@@ -202,25 +218,12 @@ function OverviewTab({ project }: { project: Project }) {
   const [rendering, setRendering] = useState(true)
 
   useEffect(() => {
-    const placeholderMd = `
-## About This Project
+    const content = project.description || `## About This Project\n\n${project.summary || 'No description available yet.'}`
 
-${project.summary || 'No description available yet.'}
-
-### Features
-
-- Feature highlights will go here
-- Add project documentation to see more
-
-### Getting Started
-
-Check out the **Live Demo** or **Source Code** using the buttons above.
-    `.trim()
-
-    renderMarkdownAsync(placeholderMd)
+    renderMarkdownAsync(content)
       .then(setRenderedContent)
       .finally(() => setRendering(false))
-  }, [project])
+  }, [project.description, project.summary])
 
   if (rendering) {
     return <div className="text-stone-400 text-sm">Loading…</div>
@@ -239,9 +242,37 @@ Check out the **Live Demo** or **Source Code** using the buttons above.
 }
 
 function ChangelogTab({ project }: { project: Project }) {
-  const changelog = [
-    { version: '1.0.0', date: 'Coming soon', changes: ['Initial release'] },
-  ]
+  const [renderedEntries, setRenderedEntries] = useState<{ version: string; date: string; html: string }[]>([])
+  const [rendering, setRendering] = useState(true)
+
+  useEffect(() => {
+    if (!project.changelog || project.changelog.length === 0) {
+      setRendering(false)
+      return
+    }
+
+    Promise.all(
+      project.changelog.map(async (entry) => ({
+        version: entry.version,
+        date: entry.date,
+        html: await renderMarkdownAsync(entry.content),
+      }))
+    )
+      .then(setRenderedEntries)
+      .finally(() => setRendering(false))
+  }, [project.changelog])
+
+  if (rendering) {
+    return <div className="text-stone-400 text-sm">Loading…</div>
+  }
+
+  if (renderedEntries.length === 0) {
+    return (
+      <div className="text-stone-400 text-sm">
+        No changelog entries yet.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -250,37 +281,144 @@ function ChangelogTab({ project }: { project: Project }) {
       </p>
 
       <div className="space-y-4">
-        {changelog.map((release, i) => (
+        {renderedEntries.map((entry, i) => (
           <div key={i} className="relative pl-6 pb-6 border-l border-white/10 last:pb-0">
             {/* Timeline dot */}
             <div className="absolute left-0 top-0 -translate-x-1/2 w-3 h-3 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 border-2 border-slate-950" />
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold text-stone-100">v{release.version}</span>
-                <span className="text-xs text-stone-500">{release.date}</span>
+                <span className="text-lg font-semibold text-stone-100">v{entry.version}</span>
+                <span className="text-xs text-stone-500">{entry.date}</span>
               </div>
-              <ul className="space-y-1">
-                {release.changes.map((change, j) => (
-                  <li key={j} className="text-sm text-stone-300 flex items-start gap-2">
-                    <span className="text-teal-400 mt-1">•</span>
-                    {change}
-                  </li>
-                ))}
-              </ul>
+              <div
+                className="prose prose-invert prose-sm max-w-none
+                           prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
+                           prose-li:text-stone-300 prose-strong:text-stone-100
+                           [&_.shiki]:rounded-lg [&_.shiki]:p-3 [&_.shiki]:text-xs"
+                dangerouslySetInnerHTML={{ __html: entry.html }}
+              />
             </div>
           </div>
         ))}
       </div>
-
-      <p className="text-stone-500 text-xs italic">
-        More changelog entries will appear as the project evolves.
-      </p>
     </div>
   )
 }
 
 function DocsTab({ project }: { project: Project }) {
+  const [activeSection, setActiveSection] = useState<DocSection | null>(null)
+  const [renderedContent, setRenderedContent] = useState<string>('')
+  const [rendering, setRendering] = useState(false)
+
+  const docs = project.docs || {
+    gettingStarted: null,
+    apiReference: null,
+    configuration: null,
+    troubleshooting: null,
+  }
+
+  const sections: { key: DocSection; title: string; icon: React.ReactNode; content: string | null }[] = [
+    {
+      key: 'gettingStarted',
+      title: 'Getting Started',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+      content: docs.gettingStarted,
+    },
+    {
+      key: 'apiReference',
+      title: 'API Reference',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      ),
+      content: docs.apiReference,
+    },
+    {
+      key: 'configuration',
+      title: 'Configuration',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      content: docs.configuration,
+    },
+    {
+      key: 'troubleshooting',
+      title: 'Troubleshooting',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      content: docs.troubleshooting,
+    },
+  ]
+
+  useEffect(() => {
+    if (!activeSection) {
+      setRenderedContent('')
+      return
+    }
+
+    const section = sections.find(s => s.key === activeSection)
+    if (!section?.content) {
+      setRenderedContent('')
+      return
+    }
+
+    setRendering(true)
+    renderMarkdownAsync(section.content)
+      .then(setRenderedContent)
+      .finally(() => setRendering(false))
+  }, [activeSection])
+
+  // If viewing a section, show the content
+  if (activeSection) {
+    const section = sections.find(s => s.key === activeSection)
+    
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setActiveSection(null)}
+          className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to docs
+        </button>
+
+        <h2 className="text-xl font-semibold text-stone-100 flex items-center gap-2">
+          <span className="text-teal-400">{section?.icon}</span>
+          {section?.title}
+        </h2>
+
+        {rendering ? (
+          <div className="text-stone-400 text-sm">Loading…</div>
+        ) : (
+          <div
+            className="prose prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
+                       prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
+                       prose-strong:text-stone-100 prose-code:text-teal-300
+                       prose-li:text-stone-300
+                       [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
+                       [&_.shiki]:border [&_.shiki]:border-white/10"
+            dangerouslySetInnerHTML={{ __html: renderedContent }}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Show section cards
   return (
     <div className="space-y-6">
       <p className="text-stone-400 text-sm">
@@ -288,87 +426,50 @@ function DocsTab({ project }: { project: Project }) {
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DocCard
-          title="Getting Started"
-          description="Quick start guide and installation instructions"
-          icon={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          }
-          comingSoon
-        />
-        <DocCard
-          title="API Reference"
-          description="Complete API documentation and examples"
-          icon={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-          }
-          comingSoon
-        />
-        <DocCard
-          title="Configuration"
-          description="Environment variables and settings"
-          icon={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          }
-          comingSoon
-        />
-        <DocCard
-          title="Troubleshooting"
-          description="Common issues and solutions"
-          icon={
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-          comingSoon
-        />
+        {sections.map((section) => {
+          const hasContent = Boolean(section.content)
+          
+          return (
+            <motion.div
+              key={section.key}
+              whileHover={hasContent ? { y: -2, scale: 1.01 } : {}}
+              onClick={() => hasContent && setActiveSection(section.key)}
+              className={`card p-4 transition-all duration-300 ${
+                hasContent 
+                  ? 'cursor-pointer hover:border-teal-500/30' 
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg border ${
+                  hasContent 
+                    ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' 
+                    : 'bg-stone-800/50 text-stone-500 border-stone-700'
+                }`}>
+                  {section.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium text-stone-100 flex items-center gap-2">
+                    {section.title}
+                    {!hasContent && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded glass text-stone-500">
+                        Coming Soon
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-stone-400 mt-0.5">
+                    {section.key === 'gettingStarted' && 'Quick start guide and installation'}
+                    {section.key === 'apiReference' && 'API documentation and examples'}
+                    {section.key === 'configuration' && 'Environment variables and settings'}
+                    {section.key === 'troubleshooting' && 'Common issues and solutions'}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
     </div>
-  )
-}
-
-function DocCard({ 
-  title, 
-  description, 
-  icon, 
-  comingSoon = false 
-}: { 
-  title: string
-  description: string
-  icon: React.ReactNode
-  comingSoon?: boolean 
-}) {
-  return (
-    <motion.div 
-      whileHover={comingSoon ? {} : { y: -2, scale: 1.01 }}
-      className={`card p-4 transition-all duration-300 ${
-        comingSoon ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-medium text-stone-100 flex items-center gap-2">
-            {title}
-            {comingSoon && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded glass text-stone-500">
-                Coming Soon
-              </span>
-            )}
-          </h3>
-          <p className="text-sm text-stone-400 mt-0.5">{description}</p>
-        </div>
-      </div>
-    </motion.div>
   )
 }
 

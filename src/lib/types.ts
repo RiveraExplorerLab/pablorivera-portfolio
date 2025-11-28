@@ -24,8 +24,16 @@ export type BlogPostInput = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>
 // Projects
 // ============================================
 export interface ChangelogEntry {
-  title: string
-  content: string  // markdown
+  version: string           // e.g., "1.0.0"
+  date: string              // e.g., "2024-01-15"
+  content: string           // markdown
+}
+
+export interface ProjectDocs {
+  gettingStarted: string | null    // markdown
+  apiReference: string | null       // markdown
+  configuration: string | null      // markdown
+  troubleshooting: string | null    // markdown
 }
 
 export interface Project {
@@ -33,6 +41,7 @@ export interface Project {
   slug: string
   title: string
   summary: string
+  description: string | null        // markdown for Overview tab
   coverImage: string | null
   repoUrl: string | null
   liveUrl: string | null
@@ -42,16 +51,14 @@ export interface Project {
   draft: boolean
   requiresAuth: boolean
   accessRequestEnabled: boolean
-  technicalDoc: string | null      // markdown
-  userGuide: string | null          // markdown
-  changeLog: ChangelogEntry[]       // array of {title, content}
+  changelog: ChangelogEntry[]       // for Changelog tab
+  docs: ProjectDocs                 // for Docs tab
   createdAt: Timestamp
   updatedAt: Timestamp
   publishedAt: Timestamp | null
 }
 
 export type ProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
-
 
 // ============================================
 // Community Signups

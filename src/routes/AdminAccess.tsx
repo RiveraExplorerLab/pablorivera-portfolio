@@ -1,6 +1,7 @@
 // src/routes/AdminAccess.tsx
 import { useState, useMemo } from 'react'
 import { Navigate, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../providers/AuthProvider'
 import { useAccessRequests } from '../hooks/useAccessRequests'
 import { useActiveAccess } from '../hooks/useProjectAccess'
@@ -16,31 +17,55 @@ export default function AdminAccess() {
   if (!user || !isAdmin) return <Navigate to="/login" replace />
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
+      {/* Header */}
       <header className="flex items-center gap-3">
-        <Link to="/admin" className="text-stone-400 hover:text-stone-200">
-          ← Admin
+        <Link 
+          to="/admin" 
+          className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Admin
         </Link>
-        <h1 className="text-2xl font-semibold text-stone-100">Access Management</h1>
+        <h1 className="text-2xl font-semibold text-stone-100 flex items-center gap-2">
+          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+          Access Management
+        </h1>
       </header>
 
       {/* Tabs */}
-      <div className="inline-flex rounded-lg border border-stone-800 overflow-hidden">
-        <button
-          onClick={() => setTab('requests')}
-          className={`px-3 py-1.5 text-sm ${tab === 'requests' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          Access Requests
-        </button>
-        <button
-          onClick={() => setTab('granted')}
-          className={`px-3 py-1.5 text-sm ${tab === 'granted' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          Granted Access
-        </button>
+      <div className="flex gap-1 border-b border-white/10">
+        {[
+          { key: 'requests', label: 'Access Requests' },
+          { key: 'granted', label: 'Granted Access' },
+        ].map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key as typeof tab)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-all duration-300 ${
+              tab === t.key
+                ? 'border-teal-400 text-teal-400'
+                : 'border-transparent text-stone-400 hover:text-stone-200 hover:border-white/20'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {tab === 'requests' ? <RequestsTab /> : <GrantedTab />}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.15 }}
+        >
+          {tab === 'requests' ? <RequestsTab /> : <GrantedTab />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
@@ -53,14 +78,12 @@ function RequestsTab() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'denied'>('pending')
   const [processingId, setProcessingId] = useState<string | null>(null)
 
-  // Filter requests
   const filteredRequests = useMemo(() => {
     if (!requests) return []
     if (filter === 'all') return requests
     return requests.filter(r => r.status === filter)
   }, [requests, filter])
 
-  // Count by status
   const counts = useMemo(() => {
     if (!requests) return { pending: 0, approved: 0, denied: 0 }
     return {
@@ -74,10 +97,8 @@ function RequestsTab() {
     setProcessingId(request.id)
     
     try {
-      // Update request status
       await updateRequestStatus(request.id, 'approved')
       
-      // Grant access
       const expiresAt = expirationDays 
         ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000)
         : null
@@ -128,31 +149,28 @@ function RequestsTab() {
   return (
     <div className="space-y-4">
       {/* Filter tabs */}
-      <div className="inline-flex rounded-lg border border-stone-800 overflow-hidden">
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-3 py-1.5 text-sm ${filter === 'pending' ? 'bg-amber-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          Pending ({counts.pending})
-        </button>
-        <button
-          onClick={() => setFilter('approved')}
-          className={`px-3 py-1.5 text-sm ${filter === 'approved' ? 'bg-emerald-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          Approved ({counts.approved})
-        </button>
-        <button
-          onClick={() => setFilter('denied')}
-          className={`px-3 py-1.5 text-sm ${filter === 'denied' ? 'bg-rose-400 text-black' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          Denied ({counts.denied})
-        </button>
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 text-sm ${filter === 'all' ? 'bg-stone-600 text-white' : 'text-stone-200 hover:bg-stone-900'}`}
-        >
-          All
-        </button>
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: 'pending', label: 'Pending', count: counts.pending, color: 'amber' },
+          { key: 'approved', label: 'Approved', count: counts.approved, color: 'teal' },
+          { key: 'denied', label: 'Denied', count: counts.denied, color: 'rose' },
+          { key: 'all', label: 'All', count: requests?.length || 0, color: 'stone' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key as typeof filter)}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-300 ${
+              filter === tab.key
+                ? tab.color === 'amber' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                : tab.color === 'teal' ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                : tab.color === 'rose' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                : 'bg-stone-700/50 text-stone-300 border border-stone-600'
+                : 'text-stone-400 hover:text-stone-200 hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
       </div>
 
       {/* Requests list */}
@@ -161,18 +179,26 @@ function RequestsTab() {
       ) : error ? (
         <p className="text-rose-400 text-sm">Error: {error}</p>
       ) : !filteredRequests.length ? (
-        <p className="text-stone-400 text-sm">No requests found.</p>
+        <div className="card p-8 text-center">
+          <p className="text-stone-400">No requests found.</p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {filteredRequests.map((request) => (
-            <RequestCard
+          {filteredRequests.map((request, index) => (
+            <motion.div
               key={request.id}
-              request={request}
-              processing={processingId === request.id}
-              onApprove={handleApprove}
-              onDeny={handleDeny}
-              onDelete={handleDelete}
-            />
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.03 }}
+            >
+              <RequestCard
+                request={request}
+                processing={processingId === request.id}
+                onApprove={handleApprove}
+                onDeny={handleDeny}
+                onDelete={handleDelete}
+              />
+            </motion.div>
           ))}
         </div>
       )}
@@ -197,32 +223,33 @@ function RequestCard({
   const [expirationDays, setExpirationDays] = useState<string>('')
   const [denyNote, setDenyNote] = useState('')
 
-  const statusColors = {
-    pending: 'bg-amber-500/20 text-amber-400',
-    approved: 'bg-emerald-500/20 text-emerald-400',
-    denied: 'bg-rose-500/20 text-rose-400',
+  const statusConfig = {
+    pending: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
+    approved: { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/20' },
+    denied: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20' },
   }
 
+  const status = statusConfig[request.status]
+
   return (
-    <div className="rounded-lg border border-stone-800 bg-stone-900/40 p-4">
+    <div className="card p-5">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-stone-100">{request.name}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[request.status]}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${status.bg} ${status.text} border ${status.border}`}>
               {request.status}
             </span>
           </div>
           <div className="text-sm text-stone-400">{request.email}</div>
           <div className="text-sm">
             <span className="text-stone-500">Project:</span>{' '}
-            <span className="text-stone-300">{request.projectTitle}</span>
+            <span className="text-teal-400">{request.projectTitle}</span>
           </div>
-          <div className="text-sm text-stone-400 mt-2">
-            <span className="text-stone-500">Message:</span>{' '}
+          <div className="text-sm text-stone-300 mt-3 p-3 rounded-lg bg-white/5 border border-white/10">
             {request.message}
           </div>
-          <div className="text-xs text-stone-500 mt-2">
+          <div className="text-xs text-stone-500 pt-2">
             Requested {formatDate(request.createdAt.toDate())}
           </div>
         </div>
@@ -230,7 +257,7 @@ function RequestCard({
         {request.status === 'pending' && (
           <button
             onClick={() => setShowActions(!showActions)}
-            className="text-sm text-stone-400 hover:text-stone-200"
+            className="btn-secondary text-xs py-1.5"
           >
             {showActions ? 'Hide' : 'Actions'}
           </button>
@@ -238,69 +265,83 @@ function RequestCard({
       </div>
 
       {/* Action panel for pending requests */}
-      {showActions && request.status === 'pending' && (
-        <div className="mt-4 pt-4 border-t border-stone-800 space-y-3">
-          {/* Approve section */}
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="text-xs text-stone-500 block mb-1">
-                Expiration (days, leave empty for no expiration)
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={expirationDays}
-                onChange={(e) => setExpirationDays(e.target.value)}
-                placeholder="e.g. 30"
-                className="w-full rounded border border-stone-700 bg-stone-800 px-2 py-1 text-sm text-stone-100"
-              />
-            </div>
-            <button
-              onClick={() => onApprove(request, expirationDays ? parseInt(expirationDays) : undefined)}
-              disabled={processing}
-              className="rounded bg-emerald-500 text-black px-3 py-1.5 text-sm font-medium hover:bg-emerald-400 disabled:opacity-60"
-            >
-              {processing ? 'Processing…' : 'Approve'}
-            </button>
-          </div>
-
-          {/* Deny section */}
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="text-xs text-stone-500 block mb-1">
-                Reason (internal note)
-              </label>
-              <input
-                type="text"
-                value={denyNote}
-                onChange={(e) => setDenyNote(e.target.value)}
-                placeholder="Optional note"
-                className="w-full rounded border border-stone-700 bg-stone-800 px-2 py-1 text-sm text-stone-100"
-              />
-            </div>
-            <button
-              onClick={() => onDeny(request, denyNote)}
-              disabled={processing}
-              className="rounded bg-rose-500 text-white px-3 py-1.5 text-sm font-medium hover:bg-rose-400 disabled:opacity-60"
-            >
-              Deny
-            </button>
-          </div>
-
-          {/* Delete */}
-          <button
-            onClick={() => onDelete(request)}
-            className="text-xs text-stone-500 hover:text-rose-400"
+      <AnimatePresence>
+        {showActions && request.status === 'pending' && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 pt-4 border-t border-white/10 space-y-4 overflow-hidden"
           >
-            Delete request
-          </button>
-        </div>
-      )}
+            {/* Approve section */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div className="flex-1">
+                <label className="text-xs text-stone-400 block mb-1">
+                  Expiration (days, leave empty for permanent)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={expirationDays}
+                  onChange={(e) => setExpirationDays(e.target.value)}
+                  placeholder="e.g. 30"
+                  className="input"
+                />
+              </div>
+              <button
+                onClick={() => onApprove(request, expirationDays ? parseInt(expirationDays) : undefined)}
+                disabled={processing}
+                className="btn-primary disabled:opacity-60"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {processing ? 'Processing…' : 'Approve'}
+              </button>
+            </div>
+
+            {/* Deny section */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div className="flex-1">
+                <label className="text-xs text-stone-400 block mb-1">
+                  Reason (internal note)
+                </label>
+                <input
+                  type="text"
+                  value={denyNote}
+                  onChange={(e) => setDenyNote(e.target.value)}
+                  placeholder="Optional note"
+                  className="input"
+                />
+              </div>
+              <button
+                onClick={() => onDeny(request, denyNote)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 
+                           hover:bg-rose-500/20 transition-colors text-sm font-medium disabled:opacity-60"
+              >
+                <svg className="w-4 h-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Deny
+              </button>
+            </div>
+
+            {/* Delete */}
+            <button
+              onClick={() => onDelete(request)}
+              className="text-xs text-stone-500 hover:text-rose-400 transition-colors"
+            >
+              Delete request permanently
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Admin note for processed requests */}
       {request.adminNote && request.status !== 'pending' && (
-        <div className="mt-2 text-xs text-stone-500">
-          <span className="text-stone-600">Note:</span> {request.adminNote}
+        <div className="mt-3 pt-3 border-t border-white/10 text-xs text-stone-500">
+          <span className="text-stone-600">Admin note:</span> {request.adminNote}
         </div>
       )}
     </div>
@@ -325,11 +366,11 @@ function GrantedTab() {
     )
   }, [accessList, search])
 
-  async function handleRevoke(access: ProjectAccess, reason?: string) {
+  async function handleRevoke(access: ProjectAccess) {
     if (!confirm(`Revoke ${access.email}'s access to ${access.projectTitle}?`)) return
     
     try {
-      await revokeAccess(access.id, user?.email || 'admin', reason)
+      await revokeAccess(access.id, user?.email || 'admin')
       reload()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to revoke')
@@ -342,8 +383,7 @@ function GrantedTab() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search by name, email, or project…"
-        className="w-full max-w-md rounded-lg border border-stone-800 bg-stone-900/50 px-3 py-2 text-sm text-stone-100
-                   placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+        className="input max-w-md"
       />
 
       {loading ? (
@@ -351,51 +391,65 @@ function GrantedTab() {
       ) : error ? (
         <p className="text-rose-400 text-sm">Error: {error}</p>
       ) : !filteredAccess.length ? (
-        <p className="text-stone-400 text-sm">No active access grants.</p>
+        <div className="card p-8 text-center">
+          <p className="text-stone-400">No active access grants.</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-stone-800">
-          <table className="min-w-full text-sm">
-            <thead className="bg-stone-900/60 text-stone-300">
-              <tr>
-                <th className="text-left px-3 py-2">User</th>
-                <th className="text-left px-3 py-2">Project</th>
-                <th className="text-left px-3 py-2">Granted</th>
-                <th className="text-left px-3 py-2">Expires</th>
-                <th className="text-left px-3 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-800 text-stone-200">
-              {filteredAccess.map((access) => (
-                <tr key={access.id}>
-                  <td className="px-3 py-2">
-                    <div className="font-medium">{access.name}</div>
-                    <div className="text-xs text-stone-400">{access.email}</div>
-                  </td>
-                  <td className="px-3 py-2">{access.projectTitle}</td>
-                  <td className="px-3 py-2 text-stone-400">
-                    {formatDate(access.grantedAt.toDate())}
-                  </td>
-                  <td className="px-3 py-2">
-                    {access.expiresAt ? (
-                      <span className={isExpiringSoon(access.expiresAt.toDate()) ? 'text-amber-400' : 'text-stone-400'}>
-                        {formatDate(access.expiresAt.toDate())}
-                      </span>
-                    ) : (
-                      <span className="text-stone-500">Never</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    <button
-                      onClick={() => handleRevoke(access)}
-                      className="text-xs text-rose-400 hover:text-rose-300"
-                    >
-                      Revoke
-                    </button>
-                  </td>
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="border-b border-white/10">
+                <tr className="text-stone-400 text-xs uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 font-medium">User</th>
+                  <th className="text-left px-4 py-3 font-medium">Project</th>
+                  <th className="text-left px-4 py-3 font-medium">Granted</th>
+                  <th className="text-left px-4 py-3 font-medium">Expires</th>
+                  <th className="text-left px-4 py-3 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredAccess.map((access, index) => (
+                  <motion.tr 
+                    key={access.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="text-stone-200 hover:bg-white/5 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{access.name}</div>
+                      <div className="text-xs text-stone-400">{access.email}</div>
+                    </td>
+                    <td className="px-4 py-3 text-teal-400">{access.projectTitle}</td>
+                    <td className="px-4 py-3 text-stone-400 text-xs">
+                      {formatDate(access.grantedAt.toDate())}
+                    </td>
+                    <td className="px-4 py-3">
+                      {access.expiresAt ? (
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          isExpiringSoon(access.expiresAt.toDate()) 
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                            : 'text-stone-400'
+                        }`}>
+                          {formatDate(access.expiresAt.toDate())}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-stone-500">Never</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleRevoke(access)}
+                        className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
+                      >
+                        Revoke
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
