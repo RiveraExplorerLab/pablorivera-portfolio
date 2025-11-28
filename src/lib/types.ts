@@ -23,6 +23,8 @@ export type BlogPostInput = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>
 // ============================================
 // Projects
 // ============================================
+export type ProjectStatus = 'planned' | 'in-progress' | 'launched' | 'archived'
+
 export interface ChangelogEntry {
   version: string           // e.g., "1.0.0"
   date: string              // e.g., "2024-01-15"
@@ -47,6 +49,7 @@ export interface Project {
   liveUrl: string | null
   techStack: string[]
   tags: string[]
+  status: ProjectStatus              // planned, in-progress, launched, archived
   featured: boolean
   draft: boolean
   requiresAuth: boolean

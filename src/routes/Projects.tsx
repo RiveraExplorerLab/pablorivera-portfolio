@@ -2,7 +2,25 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useProjects } from '../hooks/useProjects'
-import type { Project } from '../lib/types'
+import type { Project, ProjectStatus } from '../lib/types'
+
+const statusConfig: Record<ProjectStatus, { bg: string; text: string; border: string; label: string }> = {
+  'planned': { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20', label: '🔮 Planned' },
+  'in-progress': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', label: '🚧 In Progress' },
+  'launched': { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/20', label: '🚀 Launched' },
+  'archived': { bg: 'bg-stone-500/10', text: 'text-stone-400', border: 'border-stone-500/20', label: '📦 Archived' },
+}
+
+function StatusBadge({ status }: { status?: ProjectStatus }) {
+  if (!status) return null
+  const c = statusConfig[status]
+  if (!c) return null
+  return (
+    <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.bg} ${c.text} border ${c.border}`}>
+      {c.label}
+    </span>
+  )
+}
 
 export default function Projects() {
   const { data: projects, loading, error } = useProjects()
@@ -103,19 +121,21 @@ function FeaturedProjectCard({ project }: { project: Project }) {
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
             <span className="text-xs px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30">
               Featured
             </span>
+            <StatusBadge status={project.status} />
           </div>
         </div>
       ) : (
         <div className="h-32 bg-gradient-to-br from-teal-500/20 to-cyan-500/10 flex items-center justify-center relative">
           <span className="text-5xl text-teal-400/20">✦</span>
-          <div className="absolute bottom-4 left-4">
+          <div className="absolute bottom-4 left-4 flex items-center gap-2">
             <span className="text-xs px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30">
               Featured
             </span>
+            <StatusBadge status={project.status} />
           </div>
         </div>
       )}
@@ -191,9 +211,12 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
       )}
       <div className="p-4 space-y-2">
-        <h3 className="font-semibold text-stone-100 group-hover:text-teal-300 transition-colors line-clamp-1">
-          {project.title}
-        </h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-stone-100 group-hover:text-teal-300 transition-colors line-clamp-1">
+            {project.title}
+          </h3>
+          <StatusBadge status={project.status} />
+        </div>
         {project.summary && (
           <p className="text-sm text-stone-400 line-clamp-2">{project.summary}</p>
         )}

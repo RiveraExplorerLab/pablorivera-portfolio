@@ -5,10 +5,28 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useProject } from '../hooks/useProjects'
 import { renderMarkdownAsync } from '../lib/markdown'
 import { createAccessRequest, hasPendingRequest } from '../lib/accessRequests'
-import type { Project } from '../lib/types'
+import type { Project, ProjectStatus } from '../lib/types'
 
 type Tab = 'overview' | 'changelog' | 'docs'
 type DocSection = 'gettingStarted' | 'apiReference' | 'configuration' | 'troubleshooting'
+
+const statusConfig: Record<ProjectStatus, { bg: string; text: string; border: string; label: string }> = {
+  'planned': { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20', label: '🔮 Planned' },
+  'in-progress': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', label: '🚧 In Progress' },
+  'launched': { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/20', label: '🚀 Launched' },
+  'archived': { bg: 'bg-stone-500/10', text: 'text-stone-400', border: 'border-stone-500/20', label: '📦 Archived' },
+}
+
+function StatusBadge({ status }: { status?: ProjectStatus }) {
+  if (!status) return null
+  const c = statusConfig[status]
+  if (!c) return null
+  return (
+    <span className={`text-xs px-2.5 py-1 rounded-full ${c.bg} ${c.text} border ${c.border}`}>
+      {c.label}
+    </span>
+  )
+}
 
 export default function ProjectDetail() {
   const { slug = '' } = useParams()
@@ -67,11 +85,14 @@ export default function ProjectDetail() {
         className="space-y-4"
       >
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
-              <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
-              {project.title}
-            </h1>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
+                <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+                {project.title}
+              </h1>
+              <StatusBadge status={project.status} />
+            </div>
             {project.summary && (
               <p className="text-lg text-stone-300 max-w-2xl">{project.summary}</p>
             )}

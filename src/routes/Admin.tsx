@@ -19,7 +19,7 @@ import {
 } from '../lib/projects'
 import { uploadCoverImage, deleteCoverImage, validateImageFile } from '../lib/storage'
 import { slugify } from '../lib/slugify'
-import type { BlogPost, Project, ChangelogEntry, ProjectDocs } from '../lib/types'
+import type { BlogPost, Project, ChangelogEntry, ProjectDocs, ProjectStatus } from '../lib/types'
 import { Timestamp } from 'firebase/firestore'
 
 export default function Admin() {
@@ -558,6 +558,7 @@ function ProjectsAdmin() {
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-stone-100 truncate flex items-center gap-2">
                   {project.title}
+                  <ProjectStatusBadge status={project.status} />
                   {project.featured && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-400">
                       Featured
@@ -632,6 +633,7 @@ function ProjectForm({
   const [repoUrl, setRepoUrl] = useState(initial?.repoUrl || '')
   const [techStack, setTechStack] = useState((initial?.techStack || []).join(', '))
   const [tags, setTags] = useState((initial?.tags || []).join(', '))
+  const [status, setStatus] = useState<ProjectStatus>(initial?.status || 'planned')
   const [featured, setFeatured] = useState(initial?.featured ?? false)
   const [draft, setDraft] = useState(initial?.draft ?? true)
   const [requiresAuth, setRequiresAuth] = useState(initial?.requiresAuth ?? false)
@@ -746,6 +748,7 @@ function ProjectForm({
         repoUrl: repoUrl || null,
         techStack: parseListInput(techStack),
         tags: parseListInput(tags),
+        status,
         featured,
         draft,
         requiresAuth,
@@ -934,6 +937,28 @@ function ProjectForm({
                 {/* Settings */}
                 <div className="card p-5 space-y-4">
                   <h3 className="font-medium text-stone-200 text-sm">Settings</h3>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs text-stone-400">Project Status</label>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as ProjectStatus)}
+                      className="input w-full appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2357534e'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.75rem center',
+                        backgroundSize: '1rem',
+                        paddingRight: '2.5rem',
+                      }}
+                    >
+                      <option value="planned">🔮 Planned</option>
+                      <option value="in-progress">🚧 In Progress</option>
+                      <option value="launched">🚀 Launched</option>
+                      <option value="archived">📦 Archived</option>
+                    </select>
+                  </div>
+
                   <div className="space-y-3">
                     <Toggle 
                       checked={featured} 
@@ -1192,5 +1217,25 @@ function Toggle({
         {label}
       </span>
     </label>
+  )
+}
+
+function ProjectStatusBadge({ status }: { status?: ProjectStatus }) {
+  if (!status) return null
+  
+  const config = {
+    'planned': { bg: 'bg-purple-500/20', text: 'text-purple-400', label: '🔮 Planned' },
+    'in-progress': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: '🚧 In Progress' },
+    'launched': { bg: 'bg-teal-500/20', text: 'text-teal-400', label: '🚀 Launched' },
+    'archived': { bg: 'bg-stone-500/20', text: 'text-stone-400', label: '📦 Archived' },
+  }
+  
+  const c = config[status]
+  if (!c) return null
+  
+  return (
+    <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>
+      {c.label}
+    </span>
   )
 }
