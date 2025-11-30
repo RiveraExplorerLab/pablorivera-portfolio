@@ -115,13 +115,13 @@ export function renderMarkdown(md: string): string {
 export async function renderMarkdownAsync(md: string): Promise<string> {
   if (!md) return ''
   
-  // First, extract and highlight all code blocks
+  // Extract code blocks and replace with unique placeholders
   const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g
-  const codeBlocks: { placeholder: string; highlighted: string }[] = []
+  const codeBlocks: Map<string, string> = new Map()
   
-  let match
-  // Collect all code blocks
+  // Collect all code blocks first
   const matches: { full: string; lang: string; code: string }[] = []
+  let match
   while ((match = codeBlockRegex.exec(md)) !== null) {
     matches.push({
       full: match[0],
@@ -134,29 +134,31 @@ export async function renderMarkdownAsync(md: string): Promise<string> {
   const highlightedBlocks = await Promise.all(
     matches.map(async (m, i) => {
       const highlighted = await highlightCode(m.code, m.lang)
-      const placeholder = `__CODE_BLOCK_${i}__`
+      // Use a unique HTML comment as placeholder (won't be altered by marked)
+      const placeholder = `<!--CODEBLOCK${i}-->`
       return { full: m.full, placeholder, highlighted }
     })
   )
   
-  // Replace code blocks with placeholders
+  // Replace code blocks with placeholders before parsing
   let processedMd = md
   for (const block of highlightedBlocks) {
     processedMd = processedMd.replace(block.full, block.placeholder)
-    codeBlocks.push({ placeholder: block.placeholder, highlighted: block.highlighted })
+    codeBlocks.set(block.placeholder, block.highlighted)
   }
   
-  // Parse markdown
+  // Parse markdown (this won't touch HTML comments)
   const rawHtml = marked.parse(processedMd) as string
   
   // Replace placeholders with highlighted code
   let finalHtml = rawHtml
-  for (const block of codeBlocks) {
-    finalHtml = finalHtml.replace(`<p>${block.placeholder}</p>`, block.highlighted)
-    finalHtml = finalHtml.replace(block.placeholder, block.highlighted)
+  for (const [placeholder, highlighted] of codeBlocks) {
+    // Handle case where placeholder might be wrapped in <p> tags
+    finalHtml = finalHtml.replace(`<p>${placeholder}</p>`, highlighted)
+    finalHtml = finalHtml.replace(placeholder, highlighted)
   }
   
-  // Sanitize to prevent XSS, but allow Shiki's styles
+  // Sanitize to prevent XSS, but allow Shiki's styles and spans
   const cleanHtml = DOMPurify.sanitize(finalHtml, {
     USE_PROFILES: { html: true },
     ADD_ATTR: ['target', 'rel', 'style', 'class'],
