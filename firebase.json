@@ -47,6 +47,6 @@
     ]
   },
   "storage": {
-    "rules": "firebase use --add"
+    "rules": "storage.rules"
   }
 }

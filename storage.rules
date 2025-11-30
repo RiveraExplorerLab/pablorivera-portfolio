@@ -2,10 +2,11 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper: Check if user is admin
+    // Helper: Check if user is authenticated admin
     function isAdmin() {
       return request.auth != null && 
-             request.auth.token.email in ['pablomoreno.gm@gmail.com'];
+             request.auth.token.email != null &&
+             request.auth.token.email in ['pablomrivera@outlook.com'];
     }
     
     // Cover images for posts and projects
@@ -13,13 +14,14 @@ service firebase.storage {
       // Public: Read all cover images
       allow read: if true;
       
-      // Admin: Upload and delete
+      // Admin: Upload and modify files
       // - Max 5MB file size
       // - Must be an image type
-      allow write: if isAdmin()
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow create, update: if isAdmin()
+                            && request.resource.size < 5 * 1024 * 1024
+                            && request.resource.contentType.matches('image/.*');
       
+      // Admin: Delete files
       allow delete: if isAdmin();
     }
   }
