@@ -5,7 +5,7 @@ service cloud.firestore {
     // Helper: Check if user is authenticated admin
     function isAdmin() {
       return request.auth != null && 
-             request.auth.token.email == 'pablomrivera@outlook.com';
+             request.auth.token.email == 'admin@pablorivera.dev';
     }
     
     // Blog Posts
