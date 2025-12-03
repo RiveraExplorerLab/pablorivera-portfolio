@@ -1,1 +1,0 @@
-CMD + I = Open chat in terminal 
