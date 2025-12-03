@@ -16,6 +16,7 @@ const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
 
 // Debug: Remove after fixing
 console.log('[Auth Debug] Admin emails configured:', ADMIN_EMAILS.length, 'Raw env:', import.meta.env.VITE_ADMIN_EMAILS ? 'SET' : 'EMPTY')
+console.log('[Auth Debug] Emails list:', ADMIN_EMAILS)
 
 interface AuthContextType {
   user: User | null
@@ -48,6 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('[Auth Debug] User changed:', firebaseUser?.email)
+      console.log('[Auth Debug] Is in admin list:', firebaseUser ? ADMIN_EMAILS.includes((firebaseUser.email ?? '').toLowerCase()) : false)
       setUser(firebaseUser)
       setLoading(false)
     })
