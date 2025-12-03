@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 
 export default function RootLayout() {
   const [open, setOpen] = useState(false)
@@ -37,7 +37,7 @@ export default function RootLayout() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open])
 
-  const links: Array<[to: string, label: string, icon: JSX.Element]> = [
+  const links: Array<[to: string, label: string, icon: ReactNode]> = [
     ['/', 'Home', <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg>],
     ['/about', 'About', <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>],
     ['/projects', 'Projects', <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>],
@@ -193,7 +193,7 @@ export default function RootLayout() {
             </div>
             <div className="flex items-center gap-2">
               <a 
-                href="https://github.com/pablomoreno" 
+                href="https://github.com/RiveraExplorerLab" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-[#9d99a9] hover:text-[#f0b429] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -204,7 +204,7 @@ export default function RootLayout() {
                 </svg>
               </a>
               <a 
-                href="https://linkedin.com/in/pablomoreno" 
+                href="https://www.linkedin.com/in/pablo-moreno-rivera-a3a53a1b8/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-[#9d99a9] hover:text-[#f0b429] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
