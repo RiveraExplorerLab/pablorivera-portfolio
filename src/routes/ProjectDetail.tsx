@@ -13,7 +13,7 @@ type DocSection = 'gettingStarted' | 'apiReference' | 'configuration' | 'trouble
 const statusConfig: Record<ProjectStatus, { bg: string; text: string; border: string; label: string }> = {
   'planned': { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20', label: '🔮 Planned' },
   'in-progress': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', label: '🚧 In Progress' },
-  'launched': { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/20', label: '🚀 Launched' },
+  'launched': { bg: 'bg-[#f0b429]/10', text: 'text-[#f0b429]', border: 'border-[#f0b429]/20', label: '🚀 Launched' },
   'archived': { bg: 'bg-stone-500/10', text: 'text-stone-400', border: 'border-stone-500/20', label: '📦 Archived' },
 }
 
@@ -38,14 +38,14 @@ export default function ProjectDetail() {
     window.scrollTo({ top: 0 })
   }, [slug])
 
-  if (loading) return <p className="text-stone-400 text-sm">Loading project…</p>
+  if (loading) return <p className="text-[#9d99a9] text-sm">Loading project…</p>
   if (error) return <p className="text-rose-400 text-sm">Error: {error}</p>
 
   if (!project) {
     return (
       <div className="space-y-3">
-        <p className="text-stone-300">Project not found.</p>
-        <Link to="/projects" className="text-teal-400 hover:text-teal-300 transition-colors">
+        <p className="text-[#9d99a9]">Project not found.</p>
+        <Link to="/projects" className="text-[#f0b429] hover:text-[#fbbf24] transition-colors">
           ← Back to Projects
         </Link>
       </div>
@@ -69,7 +69,7 @@ export default function ProjectDetail() {
     <div className="space-y-8">
       {/* Back Link */}
       <Link
-        className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+        className="text-[#f0b429] hover:text-[#fbbf24] transition-colors text-sm inline-flex items-center gap-1"
         to="/projects"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,14 +87,14 @@ export default function ProjectDetail() {
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="space-y-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-100 flex items-center gap-3">
-                <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#e8e6f0] flex items-center gap-3">
+                <span className="inline-block size-2 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
                 {project.title}
               </h1>
               <StatusBadge status={project.status} />
             </div>
             {project.summary && (
-              <p className="text-lg text-stone-300 max-w-2xl">{project.summary}</p>
+              <p className="text-lg text-[#9d99a9] max-w-2xl">{project.summary}</p>
             )}
           </div>
 
@@ -135,30 +135,29 @@ export default function ProjectDetail() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl overflow-hidden border border-white/10"
+            className="img-container img-glow img-border-glow aspect-video"
           >
             <img
               src={project.coverImage}
               alt={`${project.title} screenshot`}
-              className="w-full max-h-96 object-cover"
               loading="lazy"
             />
           </motion.div>
         )}
 
         {/* Meta Info Bar */}
-        <div className="flex flex-wrap items-center gap-6 text-sm text-stone-400 pt-2">
+        <div className="flex flex-wrap items-center gap-6 text-sm text-[#9d99a9] pt-2">
           {/* Tech Stack */}
           {project.techStack && project.techStack.length > 0 && (
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[#f0b429]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
               <div className="flex flex-wrap gap-1.5">
                 {project.techStack.map((tech) => (
                   <span
                     key={tech}
-                    className="text-xs px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20"
+                    className="text-xs px-2 py-0.5 rounded-md bg-[#f0b429]/10 text-[#f0b429] border border-[#f0b429]/20"
                   >
                     {tech}
                   </span>
@@ -170,14 +169,14 @@ export default function ProjectDetail() {
           {/* Tags */}
           {project.tags && project.tags.length > 0 && (
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[#9d99a9]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               <div className="flex flex-wrap gap-1.5">
                 {project.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-2 py-0.5 rounded-md glass text-stone-400"
+                    className="text-xs px-2 py-0.5 rounded-md glass text-[#9d99a9]"
                   >
                     {tag}
                   </span>
@@ -196,13 +195,19 @@ export default function ProjectDetail() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-all duration-300 ${
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-all duration-300 relative ${
                   activeTab === tab
-                    ? 'border-teal-400 text-teal-400'
-                    : 'border-transparent text-stone-400 hover:text-stone-200 hover:border-white/20'
+                    ? 'border-[#f0b429] text-[#f0b429]'
+                    : 'border-transparent text-[#9d99a9] hover:text-[#e8e6f0] hover:border-white/20'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#f0b429] to-[#fbbf24]"
+                  />
+                )}
               </button>
             ))}
           </nav>
@@ -247,14 +252,14 @@ function OverviewTab({ project }: { project: Project }) {
   }, [project.description, project.summary])
 
   if (rendering) {
-    return <div className="text-stone-400 text-sm">Loading…</div>
+    return <div className="text-[#9d99a9] text-sm">Loading…</div>
   }
 
   return (
     <div
       className="prose prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
-                 prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
-                 prose-strong:text-stone-100
+                 prose-headings:text-[#e8e6f0] prose-p:text-[#9d99a9] prose-a:text-[#f0b429]
+                 prose-strong:text-[#e8e6f0]
                  [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
                  [&_.shiki]:border [&_.shiki]:border-white/10"
       dangerouslySetInnerHTML={{ __html: renderedContent }}
@@ -284,7 +289,7 @@ function ChangelogTab({ project }: { project: Project }) {
   }, [project.changelog])
 
   if (rendering) {
-    return <div className="text-stone-400 text-sm">Loading…</div>
+    return <div className="text-[#9d99a9] text-sm">Loading…</div>
   }
 
   if (renderedEntries.length === 0) {
@@ -297,7 +302,7 @@ function ChangelogTab({ project }: { project: Project }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-stone-400 text-sm">
+      <p className="text-[#9d99a9] text-sm">
         Track updates and improvements to {project.title}.
       </p>
 
@@ -305,17 +310,17 @@ function ChangelogTab({ project }: { project: Project }) {
         {renderedEntries.map((entry, i) => (
           <div key={i} className="relative pl-6 pb-6 border-l border-white/10 last:pb-0">
             {/* Timeline dot */}
-            <div className="absolute left-0 top-0 -translate-x-1/2 w-3 h-3 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 border-2 border-slate-950" />
+            <div className="absolute left-0 top-0 -translate-x-1/2 w-3 h-3 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24] border-2 border-[#13111a]" />
             
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold text-stone-100">v{entry.version}</span>
-                <span className="text-xs text-stone-500">{entry.date}</span>
+                <span className="text-lg font-semibold text-[#e8e6f0]">v{entry.version}</span>
+                <span className="text-xs text-[#9d99a9]/60">{entry.date}</span>
               </div>
               <div
                 className="prose prose-invert prose-sm max-w-none
-                           prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
-                           prose-li:text-stone-300 prose-strong:text-stone-100
+                           prose-headings:text-[#e8e6f0] prose-p:text-[#9d99a9] prose-a:text-[#f0b429]
+                           prose-li:text-[#9d99a9] prose-strong:text-[#e8e6f0]
                            [&_.shiki]:rounded-lg [&_.shiki]:p-3 [&_.shiki]:text-xs"
                 dangerouslySetInnerHTML={{ __html: entry.html }}
               />
@@ -409,7 +414,7 @@ function DocsTab({ project }: { project: Project }) {
       <div className="space-y-4">
         <button
           onClick={() => setActiveSection(null)}
-          className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+          className="text-[#f0b429] hover:text-[#fbbf24] transition-colors text-sm inline-flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -417,8 +422,8 @@ function DocsTab({ project }: { project: Project }) {
           Back to docs
         </button>
 
-        <h2 className="text-xl font-semibold text-stone-100 flex items-center gap-2">
-          <span className="text-teal-400">{section?.icon}</span>
+        <h2 className="text-xl font-semibold text-[#e8e6f0] flex items-center gap-2">
+          <span className="text-[#f0b429]">{section?.icon}</span>
           {section?.title}
         </h2>
 
@@ -427,9 +432,9 @@ function DocsTab({ project }: { project: Project }) {
         ) : (
           <div
             className="prose prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
-                       prose-headings:text-stone-100 prose-p:text-stone-300 prose-a:text-teal-400
-                       prose-strong:text-stone-100 prose-code:text-teal-300
-                       prose-li:text-stone-300
+                       prose-headings:text-[#e8e6f0] prose-p:text-[#9d99a9] prose-a:text-[#f0b429]
+                       prose-strong:text-[#e8e6f0] prose-code:text-[#fbbf24]
+                       prose-li:text-[#9d99a9]
                        [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
                        [&_.shiki]:border [&_.shiki]:border-white/10"
             dangerouslySetInnerHTML={{ __html: renderedContent }}
@@ -442,7 +447,7 @@ function DocsTab({ project }: { project: Project }) {
   // Show section cards
   return (
     <div className="space-y-6">
-      <p className="text-stone-400 text-sm">
+      <p className="text-[#9d99a9] text-sm">
         Technical documentation for {project.title}.
       </p>
 
@@ -457,28 +462,28 @@ function DocsTab({ project }: { project: Project }) {
               onClick={() => hasContent && setActiveSection(section.key)}
               className={`card p-4 transition-all duration-300 ${
                 hasContent 
-                  ? 'cursor-pointer hover:border-teal-500/30' 
+                  ? 'cursor-pointer hover:border-[#f0b429]/30' 
                   : 'opacity-50 cursor-not-allowed'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg border ${
                   hasContent 
-                    ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' 
-                    : 'bg-stone-800/50 text-stone-500 border-stone-700'
+                    ? 'bg-[#f0b429]/10 text-[#f0b429] border-[#f0b429]/20' 
+                    : 'bg-[#2a2633] text-[#9d99a9]/60 border-[#2a2633]'
                 }`}>
                   {section.icon}
                 </div>
                 <div>
-                  <h3 className="font-medium text-stone-100 flex items-center gap-2">
+                  <h3 className="font-medium text-[#e8e6f0] flex items-center gap-2">
                     {section.title}
                     {!hasContent && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded glass text-stone-500">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded glass text-[#9d99a9]/60">
                         Coming Soon
                       </span>
                     )}
                   </h3>
-                  <p className="text-sm text-stone-400 mt-0.5">
+                  <p className="text-sm text-[#9d99a9] mt-0.5">
                     {section.key === 'gettingStarted' && 'Quick start guide and installation'}
                     {section.key === 'apiReference' && 'API documentation and examples'}
                     {section.key === 'configuration' && 'Environment variables and settings'}
@@ -556,15 +561,15 @@ function RequestAccessForm({ project }: { project: Project }) {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="card p-6 border-teal-500/30 bg-teal-500/10"
+        className="card p-6 border-[#f0b429]/30 bg-[#f0b429]/10"
       >
-        <h3 className="font-semibold text-teal-400 flex items-center gap-2">
+        <h3 className="font-semibold text-[#f0b429] flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Request Submitted
         </h3>
-        <p className="text-sm text-stone-300 mt-2">
+        <p className="text-sm text-[#9d99a9] mt-2">
           Thanks for your interest! I'll review your request and get back to you soon.
         </p>
       </motion.div>
@@ -590,18 +595,18 @@ function RequestAccessForm({ project }: { project: Project }) {
   return (
     <div className="card p-6 space-y-4">
       <div>
-        <h3 className="font-semibold text-stone-100 flex items-center gap-2">
-          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+        <h3 className="font-semibold text-[#e8e6f0] flex items-center gap-2">
+          <span className="inline-block size-2 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
           Request Access
         </h3>
-        <p className="text-sm text-stone-400 mt-1">
+        <p className="text-sm text-[#9d99a9] mt-1">
           This project requires approval. Fill out the form below to request access.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="ra-email" className="text-sm text-stone-300 block mb-1">
+          <label htmlFor="ra-email" className="text-sm text-[#9d99a9] block mb-1">
             Email <span className="text-rose-400">*</span>
           </label>
           <input
@@ -616,7 +621,7 @@ function RequestAccessForm({ project }: { project: Project }) {
         </div>
 
         <div>
-          <label htmlFor="ra-name" className="text-sm text-stone-300 block mb-1">
+          <label htmlFor="ra-name" className="text-sm text-[#9d99a9] block mb-1">
             Name <span className="text-rose-400">*</span>
           </label>
           <input
@@ -631,7 +636,7 @@ function RequestAccessForm({ project }: { project: Project }) {
         </div>
 
         <div>
-          <label htmlFor="ra-message" className="text-sm text-stone-300 block mb-1">
+          <label htmlFor="ra-message" className="text-sm text-[#9d99a9] block mb-1">
             Why do you want access? <span className="text-rose-400">*</span>
           </label>
           <textarea

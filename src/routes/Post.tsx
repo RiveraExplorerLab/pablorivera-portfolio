@@ -96,7 +96,7 @@ export default function Post() {
     }
   }
 
-  if (loading) return <p className="text-stone-400 text-sm">Loading…</p>
+  if (loading) return <p className="text-[#9d99a9] text-sm">Loading…</p>
   if (error || !post) return <p className="text-rose-400 text-sm">Not found.</p>
 
   const publishedDate = post.publishedAt?.toDate() || post.createdAt.toDate()
@@ -107,7 +107,7 @@ export default function Post() {
       {/* Back link */}
       <Link
         to="/blog"
-        className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+        className="text-[#f0b429] hover:text-[#fbbf24] transition-colors text-sm inline-flex items-center gap-1"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -121,13 +121,13 @@ export default function Post() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-stone-100">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#e8e6f0]">
           {post.title}
         </h1>
         
         <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 text-stone-400">
-            <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center gap-2 text-[#9d99a9]">
+            <svg className="w-4 h-4 text-[#f0b429]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <time className="gradient-text font-medium">
@@ -138,17 +138,17 @@ export default function Post() {
               })}
             </time>
           </div>
-          <span className="text-stone-700">•</span>
-          <div className="flex items-center gap-2 text-stone-400">
+          <span className="text-[#9d99a9]/50">•</span>
+          <div className="flex items-center gap-2 text-[#9d99a9]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{readingTime} min read</span>
           </div>
-          <span className="text-stone-700">•</span>
+          <span className="text-[#9d99a9]/50">•</span>
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-2 text-stone-400 hover:text-teal-400 transition-colors"
+            className="flex items-center gap-2 text-[#9d99a9] hover:text-[#f0b429] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -162,7 +162,7 @@ export default function Post() {
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-3 py-1 rounded-full glass text-stone-300"
+                className="text-xs px-3 py-1 rounded-full glass text-[#9d99a9]"
               >
                 {tag}
               </span>
@@ -175,12 +175,11 @@ export default function Post() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mt-6 rounded-2xl overflow-hidden border border-white/10"
+            className="mt-6 img-container img-glow img-border-glow aspect-video"
           >
             <img
               src={post.coverImage}
               alt=""
-              className="w-full max-h-[480px] object-cover"
               loading="lazy"
             />
           </motion.div>
@@ -192,19 +191,19 @@ export default function Post() {
         {/* Main Content */}
         <div className="min-w-0">
           {rendering ? (
-            <div className="text-stone-400 text-sm">Rendering content…</div>
+            <div className="text-[#9d99a9] text-sm">Rendering content…</div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
               className="prose prose-lg prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
-                         prose-headings:text-stone-100 prose-headings:scroll-mt-20
-                         prose-p:text-stone-300 prose-p:leading-relaxed
-                         prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline
-                         prose-strong:text-stone-100 prose-code:text-teal-300
-                         prose-li:text-stone-300
-                         prose-blockquote:border-teal-500 prose-blockquote:text-stone-400
+                         prose-headings:text-[#e8e6f0] prose-headings:scroll-mt-20
+                         prose-p:text-[#9d99a9] prose-p:leading-relaxed
+                         prose-a:text-[#f0b429] prose-a:no-underline hover:prose-a:underline
+                         prose-strong:text-[#e8e6f0] prose-code:text-[#fbbf24]
+                         prose-li:text-[#9d99a9]
+                         prose-blockquote:border-[#f0b429] prose-blockquote:text-[#9d99a9]
                          prose-hr:border-white/10
                          [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
                          [&_.shiki]:border [&_.shiki]:border-white/10 [&_.shiki]:my-6
@@ -220,19 +219,20 @@ export default function Post() {
         {toc.length > 0 && (
           <aside className="hidden lg:block">
             <div className="sticky top-24">
-              <nav className="card p-4 space-y-3">
-                <h4 className="text-xs font-medium text-stone-400 uppercase tracking-wider">
+              <nav className="card p-5 space-y-4">
+                <h4 className="text-xs font-medium text-[#9d99a9] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
                   On this page
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {toc.map((item) => (
                     <li key={item.id}>
                       <a
                         href={`#${item.id}`}
-                        className={`block text-sm transition-colors hover:text-teal-400 ${
+                        className={`block text-sm transition-colors hover:text-[#f0b429] leading-snug ${
                           item.level === 2 
-                            ? 'text-stone-300' 
-                            : 'text-stone-500 pl-3'
+                            ? 'text-[#9d99a9] font-medium' 
+                            : 'text-[#9d99a9]/60 pl-3 border-l border-white/10'
                         }`}
                       >
                         {item.text}
@@ -248,21 +248,36 @@ export default function Post() {
 
       {/* Related Posts */}
       {relatedPosts.length > 0 && (
-        <section className="pt-8 border-t border-white/10">
-          <h2 className="text-lg font-semibold text-stone-100 mb-4">Related Posts</h2>
+        <section className="pt-8 border-t border-white/10 space-y-4">
+          <h2 className="text-lg font-semibold text-[#e8e6f0] flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
+            Related Posts
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {relatedPosts.map((relatedPost) => (
               <Link
                 key={relatedPost.id}
                 to={`/blog/${relatedPost.slug}`}
-                className="card p-4 group no-underline hover:no-underline hover:border-teal-500/30 transition-colors"
+                className="card p-4 group no-underline hover:no-underline hover:border-[#f0b429]/30 transition-all"
               >
-                <h3 className="font-medium text-stone-100 group-hover:text-teal-400 transition-colors line-clamp-2">
+                <h3 className="font-medium text-[#e8e6f0] group-hover:text-[#f0b429] transition-colors line-clamp-2">
                   {relatedPost.title}
                 </h3>
-                <p className="text-sm text-stone-500 mt-1">
+                <p className="text-sm text-[#9d99a9] mt-2">
                   {estimateReadingTime(relatedPost.markdown || '')} min read
                 </p>
+                {relatedPost.tags && relatedPost.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {relatedPost.tags.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] px-2 py-0.5 rounded-full glass text-[#9d99a9]/60"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </Link>
             ))}
           </div>
@@ -273,7 +288,7 @@ export default function Post() {
       <footer className="pt-8 border-t border-white/10 flex items-center justify-between">
         <Link
           to="/blog"
-          className="text-teal-400 hover:text-teal-300 transition-colors text-sm inline-flex items-center gap-1"
+          className="text-[#f0b429] hover:text-[#fbbf24] transition-colors text-sm inline-flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -282,7 +297,7 @@ export default function Post() {
         </Link>
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="text-stone-500 hover:text-stone-300 transition-colors text-sm inline-flex items-center gap-1"
+          className="text-[#9d99a9] hover:text-[#e8e6f0] transition-colors text-sm inline-flex items-center gap-1"
         >
           Back to top
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

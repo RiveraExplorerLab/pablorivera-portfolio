@@ -1,0 +1,26 @@
+{
+  "name": "Pablo Rivera",
+  "short_name": "Pablo R.",
+  "description": "Portfolio of Pablo Rivera — Developer & Systems Thinker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#13111a",
+  "theme_color": "#13111a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
