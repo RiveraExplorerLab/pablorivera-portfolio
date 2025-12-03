@@ -19,6 +19,7 @@ export default function Post() {
   const [rendering, setRendering] = useState(true)
   const [toc, setToc] = useState<TOCItem[]>([])
   const [copied, setCopied] = useState(false)
+  const [tocOpen, setTocOpen] = useState(false)
 
   // Extract table of contents from markdown
   const extractTOC = (markdown: string): TOCItem[] => {
@@ -85,14 +86,32 @@ export default function Post() {
       .slice(0, 3)
   }, [allPosts, post])
 
-  // Copy link handler
-  const handleCopyLink = async () => {
+  // Share handler - uses native share on mobile, copy on desktop
+  const handleShare = async () => {
+    const shareData = {
+      title: post?.title,
+      url: window.location.href,
+    }
+
     try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData)
+      } else {
+        await navigator.clipboard.writeText(window.location.href)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
     } catch (err) {
-      console.error('Failed to copy:', err)
+      // User cancelled share or error - try clipboard fallback
+      if ((err as Error).name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(window.location.href)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        } catch {
+          console.error('Failed to share:', err)
+        }
+      }
     }
   }
 
@@ -119,130 +138,140 @@ export default function Post() {
       <motion.header 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
+        className={`relative rounded-2xl overflow-hidden ${post.coverImage ? 'py-12 px-6 md:px-10' : ''}`}
       >
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#e8e6f0]">
-          {post.title}
-        </h1>
-        
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 text-[#9d99a9]">
-            <svg className="w-4 h-4 text-[#f0b429]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <time className="gradient-text font-medium">
-              {publishedDate.toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </time>
-          </div>
-          <span className="text-[#9d99a9]/50">•</span>
-          <div className="flex items-center gap-2 text-[#9d99a9]">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{readingTime} min read</span>
-          </div>
-          <span className="text-[#9d99a9]/50">•</span>
-          <button
-            onClick={handleCopyLink}
-            className="flex items-center gap-2 text-[#9d99a9] hover:text-[#f0b429] transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            <span>{copied ? 'Copied!' : 'Share'}</span>
-          </button>
-        </div>
-
-        {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            {post.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-3 py-1 rounded-full glass text-[#9d99a9]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
+        {/* Background Image */}
         {post.coverImage && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mt-6 img-container img-glow img-border-glow aspect-video"
-          >
-            <img
-              src={post.coverImage}
-              alt=""
-              loading="lazy"
-            />
-          </motion.div>
+          <>
+            <div className="absolute inset-0">
+              <img
+                src={post.coverImage}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#13111a] via-[#13111a]/90 to-[#13111a]/70" />
+          </>
         )}
-      </motion.header>
 
-      {/* Content with TOC */}
-      <div className="grid lg:grid-cols-[1fr,220px] gap-8">
-        {/* Main Content */}
-        <div className="min-w-0">
-          {rendering ? (
-            <div className="text-[#9d99a9] text-sm">Rendering content…</div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="prose prose-lg prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
-                         prose-headings:text-[#e8e6f0] prose-headings:scroll-mt-20
-                         prose-p:text-[#9d99a9] prose-p:leading-relaxed
-                         prose-a:text-[#f0b429] prose-a:no-underline hover:prose-a:underline
-                         prose-strong:text-[#e8e6f0] prose-code:text-[#fbbf24]
-                         prose-li:text-[#9d99a9]
-                         prose-blockquote:border-[#f0b429] prose-blockquote:text-[#9d99a9]
-                         prose-hr:border-white/10
-                         [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
-                         [&_.shiki]:border [&_.shiki]:border-white/10 [&_.shiki]:my-6
-                         [&_code]:text-sm [&_code]:font-mono
-                         [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-white/10
-                         [&_h3]:mt-8 [&_h3]:mb-3"
-              dangerouslySetInnerHTML={{ __html: renderedContent }}
-            />
+        {/* Content */}
+        <div className={`relative space-y-4 ${post.coverImage ? 'z-10' : ''}`}>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#e8e6f0]">
+            {post.title}
+          </h1>
+          
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-2 text-[#9d99a9]">
+              <svg className="w-4 h-4 text-[#f0b429]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <time className="gradient-text font-medium">
+                {publishedDate.toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </time>
+            </div>
+            <span className="text-[#9d99a9]/50">•</span>
+            <div className="flex items-center gap-2 text-[#9d99a9]">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{readingTime} min read</span>
+            </div>
+            <span className="text-[#9d99a9]/50">•</span>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 text-[#9d99a9] hover:text-[#f0b429] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              <span>{copied ? 'Copied!' : 'Share'}</span>
+            </button>
+          </div>
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {post.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-3 py-1 rounded-full glass text-[#9d99a9]"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
         </div>
+      </motion.header>
 
-        {/* Table of Contents (Desktop) */}
-        {toc.length > 0 && (
-          <aside className="hidden lg:block">
-            <div className="sticky top-24">
-              <nav className="card p-5 space-y-4">
-                <h4 className="text-xs font-medium text-[#9d99a9] uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
-                  On this page
-                </h4>
-                <ul className="space-y-2.5">
-                  {toc.map((item) => (
-                    <li key={item.id}>
-                      <a
-                        href={`#${item.id}`}
-                        className={`block text-sm transition-colors hover:text-[#f0b429] leading-snug ${
-                          item.level === 2 
-                            ? 'text-[#9d99a9] font-medium' 
-                            : 'text-[#9d99a9]/60 pl-3 border-l border-white/10'
-                        }`}
-                      >
-                        {item.text}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            </div>
-          </aside>
+      {/* TOC (collapsible on all screens) */}
+      {toc.length > 0 && (
+        <div>
+          <button
+            onClick={() => setTocOpen(!tocOpen)}
+            className={`w-full card p-4 flex items-center justify-between text-left ${tocOpen ? 'rounded-b-none border-b-0' : ''}`}
+          >
+            <span className="text-sm font-medium text-[#9d99a9] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#f0b429] to-[#fbbf24]" />
+              On this page
+            </span>
+            <svg 
+              className={`w-4 h-4 text-[#9d99a9] transition-transform ${tocOpen ? 'rotate-180' : ''}`} 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {tocOpen && (
+            <nav className="card rounded-t-none p-4 -mt-px border-t-0 space-y-2">
+              {toc.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  onClick={() => setTocOpen(false)}
+                  className={`block text-sm transition-colors hover:text-[#f0b429] ${
+                    item.level === 2 
+                      ? 'text-[#9d99a9] font-medium' 
+                      : 'text-[#9d99a9]/60 pl-3'
+                  }`}
+                >
+                  {item.text}
+                </a>
+              ))}
+            </nav>
+          )}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="min-w-0">
+        {rendering ? (
+          <div className="text-[#9d99a9] text-sm">Rendering content…</div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="prose prose-lg prose-invert prose-pre:p-0 prose-pre:bg-transparent max-w-none
+                       prose-headings:text-[#e8e6f0] prose-headings:scroll-mt-20
+                       prose-p:text-[#9d99a9] prose-p:leading-relaxed
+                       prose-a:text-[#f0b429] prose-a:no-underline hover:prose-a:underline
+                       prose-strong:text-[#e8e6f0] prose-code:text-[#fbbf24]
+                       prose-li:text-[#9d99a9]
+                       prose-blockquote:border-[#f0b429] prose-blockquote:text-[#9d99a9]
+                       prose-hr:border-white/10
+                       [&_.shiki]:rounded-xl [&_.shiki]:p-4 [&_.shiki]:text-sm [&_.shiki]:overflow-x-auto
+                       [&_.shiki]:border [&_.shiki]:border-white/10 [&_.shiki]:my-6
+                       [&_code]:text-sm [&_code]:font-mono
+                       [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-white/10
+                       [&_h3]:mt-8 [&_h3]:mb-3"
+            dangerouslySetInnerHTML={{ __html: renderedContent }}
+          />
         )}
       </div>
 
