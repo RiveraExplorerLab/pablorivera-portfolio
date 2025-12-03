@@ -9,7 +9,13 @@ import type { User } from 'firebase/auth'
 import { auth } from '../lib/firebase'
 
 // Allowed admin email(s) - loaded from environment variables
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').filter(Boolean)
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
+  .split(',')
+  .map((e: string) => e.trim().toLowerCase())
+  .filter(Boolean)
+
+// Debug: Remove after fixing
+console.log('[Auth Debug] Admin emails configured:', ADMIN_EMAILS.length, 'Raw env:', import.meta.env.VITE_ADMIN_EMAILS ? 'SET' : 'EMPTY')
 
 interface AuthContextType {
   user: User | null
@@ -37,8 +43,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Check if current user is in admin whitelist
-  const isAdmin = user ? ADMIN_EMAILS.includes(user.email ?? '') : false
+  // Check if current user is in admin whitelist (case-insensitive)
+  const isAdmin = user ? ADMIN_EMAILS.includes((user.email ?? '').toLowerCase()) : false
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
