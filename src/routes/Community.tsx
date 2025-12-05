@@ -11,6 +11,7 @@ import { createAccessRequest, hasPendingRequest } from '../lib/accessRequests'
 import { useProjects } from '../hooks/useProjects'
 import type { Project } from '../lib/types'
 import SEO from '../components/SEO'
+import { track } from '../lib/analytics'
 
 export default function Community() {
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function Community() {
     <>
       <SEO 
         title="Community" 
-        description="Join the lab — a calm space for small, sharp experiments. Get early access to projects, honest progress notes, and help shape what gets built next."
+        description="Join the Inner Loop — get early access to projects, honest progress updates, and help shape what gets built next."
       />
       <div className="space-y-16">
       {/* HERO */}
@@ -32,11 +33,11 @@ export default function Community() {
           transition={{ duration: 0.3 }}
         >
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#e8e6f0]">
-            Join the Lab
+            The Inner Loop
           </h1>
           <p className="max-w-2xl text-lg text-[#9d99a9] mt-4 leading-relaxed">
-            A calm space for small, sharp experiments — simple tools, honest notes, 
-            and feedback that helps things get better.
+            Get closer to the build — early access, honest updates, 
+            and feedback that shapes what comes next.
           </p>
         </motion.div>
 
@@ -121,7 +122,7 @@ export default function Community() {
           >
             <a
               className="btn-secondary w-full justify-center no-underline hover:no-underline"
-              href="mailto:hello@pablorivera.dev?subject=Explorer%20Lab%20Idea"
+              href="mailto:hello@pablorivera.dev?subject=Project%20Idea"
             >
               Email an idea
             </a>
@@ -312,6 +313,7 @@ function NewsletterForm() {
       }
 
       await createNewsletterSignup(value, navigator.userAgent)
+      track.newsletterSignup()
       setStatus('ok')
       setEmail('')
     } catch (err) {

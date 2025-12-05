@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import SEO from '../components/SEO'
+import { track } from '../lib/analytics'
 
 const currentlyInto = [
   "obsessing over micro-interactions",
@@ -14,7 +15,10 @@ const currentlyInto = [
 
 export default function About() {
   const [currentlyIndex, setCurrentlyIndex] = useState(0)
-  const cycleCurrently = () => setCurrentlyIndex(i => (i + 1) % currentlyInto.length)
+  const cycleCurrently = () => {
+    setCurrentlyIndex(i => (i + 1) % currentlyInto.length)
+    track.currentlyClick()
+  }
 
   return (
     <>
@@ -104,19 +108,16 @@ export default function About() {
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="card p-6 md:p-8 space-y-4 max-w-2xl"
+          className="card p-6 md:p-8 space-y-4"
         >
           <p className="text-[#9d99a9] leading-relaxed">
-            I didn't start as a developer. I started as the person who wondered "why is this process so complicated?" enough times that someone eventually said "well, why don't you fix it?"
+            I got lucky out of high school — landed a job as a desktop tech doing field support. Honestly, I loved it. Troubleshooting, solving problems, that constant cycle of "I don't know this yet" followed by "okay now I do." But the part I didn't expect to love? Talking to people. Learning that not everyone speaks tech, and that translating the complicated stuff into normal-human is actually a skill.
           </p>
           <p className="text-[#9d99a9] leading-relaxed">
-            So I did. First with Power Platform (don't judge), then with actual code. Turned out I had a knack for turning messy, paper-based workflows into apps that people actually wanted to use.
+            Eventually I realized there were different paths in IT and figured I'd try software dev. Didn't know where to start, so I signed up for a full-stack bootcamp through ASU. It was hard. That's also why it was fun — I like being challenged.
           </p>
           <p className="text-[#9d99a9] leading-relaxed">
-            Now I spend my time deep in <span className="text-[#e8e6f0]">React</span>, <span className="text-[#e8e6f0]">TypeScript</span>, and <span className="text-[#e8e6f0]">Firebase</span> — building tools that feel thoughtful. The kind where you think "oh, that's nice" instead of "where's the button?"
-          </p>
-          <p className="text-[#f0b429] font-medium">
-            I'm still learning. Always will be. That's the fun part.
+            My first dev job was as a Power Apps programmer. Ended up doing way more than just Power Apps — sitting in meetings with departments, figuring out how to digitize their workflows, automate the stuff that was eating their time. That's when it clicked: this isn't just about building cool projects. It's about solving <span className="text-[#f0b429]">real problems</span> for <span className="text-[#f0b429]">real people</span>.
           </p>
         </motion.div>
       </section>
@@ -306,7 +307,7 @@ export default function About() {
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="card p-6 flex items-center gap-4 max-w-xl"
+          className="card p-6 flex items-center gap-4"
         >
           <span className="text-4xl">☕</span>
           <div>
@@ -331,7 +332,7 @@ export default function About() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/community" className="btn-primary">
-              Join the lab
+              Join the Inner Loop
             </Link>
             <a href="mailto:hello@pablorivera.dev" className="btn-secondary">
               Drop me a line

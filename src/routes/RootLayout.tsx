@@ -1,9 +1,11 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { track } from '../lib/analytics'
 
 export default function RootLayout() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [logoClicks, setLogoClicks] = useState(0)
   const location = useLocation()
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -36,6 +38,13 @@ export default function RootLayout() {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open])
+
+  // Track logo clicks for easter egg
+  const handleLogoClick = () => {
+    const newCount = logoClicks + 1
+    setLogoClicks(newCount)
+    track.logoClick(newCount)
+  }
 
   const links: Array<[to: string, label: string, icon: ReactNode]> = [
     ['/', 'Home', <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/></svg>],
@@ -73,6 +82,7 @@ export default function RootLayout() {
             {/* Brand */}
             <NavLink 
               to="/" 
+              onClick={handleLogoClick}
               className="font-heading font-semibold tracking-tight gradient-text text-lg hover:opacity-80 transition-opacity min-h-[44px] flex items-center"
             >
               Pablo Rivera
@@ -196,6 +206,7 @@ export default function RootLayout() {
                 href="https://github.com/RiveraExplorerLab" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={() => track.contactClick('github')}
                 className="text-[#9d99a9] hover:text-[#f0b429] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="GitHub"
               >
@@ -207,6 +218,7 @@ export default function RootLayout() {
                 href="https://www.linkedin.com/in/pablo-moreno-rivera-a3a53a1b8/" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={() => track.contactClick('linkedin')}
                 className="text-[#9d99a9] hover:text-[#f0b429] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="LinkedIn"
               >
@@ -216,6 +228,7 @@ export default function RootLayout() {
               </a>
               <a 
                 href="mailto:hello@pablorivera.dev" 
+                onClick={() => track.contactClick('email')}
                 className="text-[#9d99a9] hover:text-[#f0b429] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Email"
               >

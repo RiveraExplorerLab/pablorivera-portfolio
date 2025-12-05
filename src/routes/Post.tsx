@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { usePost, usePosts } from '../hooks/useBlogPosts'
 import { renderMarkdownAsync, estimateReadingTime } from '../lib/markdown'
+import { track } from '../lib/analytics'
 
 interface TOCItem {
   id: string
@@ -20,6 +21,43 @@ export default function Post() {
   const [toc, setToc] = useState<TOCItem[]>([])
   const [copied, setCopied] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
+
+  // Track scroll depth
+  useEffect(() => {
+    if (!post) return
+    
+    const tracked = { 25: false, 50: false, 75: false, 100: false }
+    
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+      const scrollPercent = Math.round((window.scrollY / scrollHeight) * 100)
+      
+      const thresholds = [25, 50, 75, 100] as const
+      thresholds.forEach(threshold => {
+        if (scrollPercent >= threshold && !tracked[threshold]) {
+          tracked[threshold] = true
+          track.scrollDepth(`/blog/${slug}`, threshold)
+        }
+      })
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [post, slug])
+
+  // Track time on page
+  useEffect(() => {
+    if (!post) return
+    
+    const startTime = Date.now()
+    
+    return () => {
+      const seconds = Math.round((Date.now() - startTime) / 1000)
+      if (seconds > 5) { // Only track if they stayed more than 5 seconds
+        track.timeOnPage(`/blog/${slug}`, seconds)
+      }
+    }
+  }, [post, slug])
 
   // Extract table of contents from markdown
   const extractTOC = (markdown: string): TOCItem[] => {
@@ -96,10 +134,12 @@ export default function Post() {
     try {
       if (navigator.share && navigator.canShare?.(shareData)) {
         await navigator.share(shareData)
+        track.blogPostShare(slug)
       } else {
         await navigator.clipboard.writeText(window.location.href)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
+        track.blogPostShare(slug)
       }
     } catch (err) {
       // User cancelled share or error - try clipboard fallback
@@ -233,7 +273,10 @@ export default function Post() {
                 <a
                   key={item.id}
                   href={`#${item.id}`}
-                  onClick={() => setTocOpen(false)}
+                  onClick={() => {
+                    setTocOpen(false)
+                    track.blogTocClick(slug, item.text)
+                  }}
                   className={`block text-sm transition-colors hover:text-[#f0b429] ${
                     item.level === 2 
                       ? 'text-[#9d99a9] font-medium' 

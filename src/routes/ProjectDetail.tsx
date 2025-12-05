@@ -6,6 +6,7 @@ import { useProject } from '../hooks/useProjects'
 import { renderMarkdownAsync } from '../lib/markdown'
 import { createAccessRequest, hasPendingRequest } from '../lib/accessRequests'
 import type { Project, ProjectStatus } from '../lib/types'
+import { track } from '../lib/analytics'
 
 type Tab = 'overview' | 'changelog' | 'docs'
 type DocSection = 'gettingStarted' | 'apiReference' | 'configuration' | 'troubleshooting'
@@ -37,6 +38,13 @@ export default function ProjectDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [slug])
+
+  // Track project view
+  useEffect(() => {
+    if (project) {
+      track.projectView(project.id)
+    }
+  }, [project])
 
   if (loading) return <p className="text-[#9d99a9] text-sm">Loading project…</p>
   if (error) return <p className="text-rose-400 text-sm">Error: {error}</p>
@@ -105,6 +113,7 @@ export default function ProjectDetail() {
                 href={project.liveUrl}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => track.projectLinkClick(project.id, 'live')}
                 className="btn-primary"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,6 +127,7 @@ export default function ProjectDetail() {
                 href={project.repoUrl}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => track.projectLinkClick(project.id, 'github')}
                 className="btn-secondary"
               >
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">

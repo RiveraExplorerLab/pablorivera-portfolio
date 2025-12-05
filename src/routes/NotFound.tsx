@@ -1,6 +1,7 @@
-import { Link, isRouteErrorResponse, useRouteError } from 'react-router-dom'
+import { Link, isRouteErrorResponse, useRouteError, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import { track } from '../lib/analytics'
 
 const excuses = [
   "The page took a coffee break ☕",
@@ -24,9 +25,16 @@ const suggestions = [
 
 export default function NotFound() {
   const err = useRouteError()
+  const location = useLocation()
   const is404 = isRouteErrorResponse(err) && err.status === 404
   const [excuseIndex, setExcuseIndex] = useState(0)
   const [clicks, setClicks] = useState(0)
+  const [easterEggTracked, setEasterEggTracked] = useState(false)
+
+  // Track 404 page view
+  useEffect(() => {
+    track.notFoundPage(location.pathname)
+  }, [location.pathname])
 
   // Rotate excuse on click
   const cycleExcuse = () => {
@@ -36,6 +44,14 @@ export default function NotFound() {
 
   // Easter egg after clicking a lot
   const easterEgg = clicks >= 5
+
+  // Track easter egg discovery
+  useEffect(() => {
+    if (easterEgg && !easterEggTracked) {
+      track.easterEggFound('404_persistence')
+      setEasterEggTracked(true)
+    }
+  }, [easterEgg, easterEggTracked])
 
   // Random initial excuse
   useEffect(() => {

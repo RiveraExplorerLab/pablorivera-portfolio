@@ -5,6 +5,7 @@ import SEO from '../components/SEO'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useFeaturedProjects, useProjects } from '../hooks/useProjects'
 import type { Project } from '../lib/types'
+import { track } from '../lib/analytics'
 
 // Ambient glow hook - follows mouse with smooth interpolation
 function useAmbientGlow(containerRef: React.RefObject<HTMLElement | null>) {
@@ -46,7 +47,6 @@ const funFacts = [
   "I debug best at 2am ☕",
   "Vim or VS Code? Yes.",
   "I name variables like poems",
-  "My rubber duck is tired",
   "Currently: 47 browser tabs",
   "I speak fluent console.log",
   "Semicolons are optional (fight me)",
@@ -68,7 +68,10 @@ export default function Home() {
 
   // Fun fact state
   const [factIndex, setFactIndex] = useState(0)
-  const cycleFact = () => setFactIndex(i => (i + 1) % funFacts.length)
+  const cycleFact = () => {
+    setFactIndex(i => (i + 1) % funFacts.length)
+    track.funFactClick()
+  }
 
   // Scroll indicator visibility
   const { scrollY } = useScroll()
@@ -397,7 +400,7 @@ export default function Home() {
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link to="/community" className="btn-primary">
-                Join the lab
+                Join the Inner Loop
               </Link>
               <a href="mailto:hello@pablorivera.dev" className="btn-secondary">
                 Say hello
